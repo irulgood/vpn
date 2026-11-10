@@ -1,0 +1,142 @@
+#!/bin/bash
+clear
+RED='\033[0;31m'
+NC='\033[0m'
+GRAY="\e[1;30m"
+ORANGE='\033[0;33m'
+CYAN='\033[0;36m'
+BLUE="\033[97m"
+GREEN="\e[38;5;155m"
+GRENBO="\e[92;1m"
+YELL='\033[0;33m'
+BIWhite='\033[1;97m'
+red() { echo -e "\\033[32;1m${*}\\033[0m"; }
+
+/usr/bin/curl -sS ipv4.icanhazip.com >/dev/null
+MYIP=$(/usr/bin/curl -sS ipv4.icanhazip.com)
+
+clear
+IP=$(/usr/bin/wget -qO- icanhazip.com)
+/usr/bin/date +'%Y-%m-%d' >/dev/null
+dateToday=$(date +"%Y-%m-%d")
+Name=$(cat  /etc/xray/domain)
+
+if ! command -v jq &> /dev/null
+then
+    echo "[ ${BIWhite}INFO${NC} ] Installing jq for JSON parsing..."
+    sleep 1
+    if [[ -f /etc/debian_version ]]; then
+        apt-get update
+        apt-get install -y jq
+    elif [[ -f /etc/redhat-release ]]; then
+        yum install -y jq
+    fi
+fi
+
+mulai_backupnya() {
+    bottoken=$(sed -n '1p' /root/.bckupbot | awk '{print $1}')
+    adminid=$(sed -n '2p' /root/.bckupbot | awk '{print $1}')
+
+    if [[ -z "$bottoken" || -z "$adminid" ]]; then
+        echo -e "[ ${RED}ERROR${NC} ] Bot token or Admin ID is empty. Please check /root/.bckupbot file."
+        exit 1
+    fi
+
+    echo -e "[ ${BIWhite}INFO${NC} ] » VPS Data Backup... "
+    sleep 1
+    rm -rf /root/backup
+    echo -e "[ ${BIWhite}INFO${NC} ] » Directory Created... "
+    sleep 1
+    mkdir /root/backup
+    echo -e "[ ${BIWhite}INFO${NC} ] » VPS Data Backup Start Now... "
+    sleep 1
+    echo -e "[ ${BIWhite}INFO${NC} ] » Please Wait , Backup In Process Now... "
+    sleep 1
+    
+    cp /etc/passwd backup/ &>/dev/null
+    cp /etc/group backup/ &>/dev/null
+    cp /etc/shadow backup/ &>/dev/null
+    cp /etc/gshadow backup/ &>/dev/null
+    cp /etc/crontab backup/ &>/dev/null
+    cp /etc/ssh/.ssh.db backup/ &>/dev/null
+    cp /etc/vmess/.vmess.db backup/ &>/dev/null
+    cp /etc/vless/.vless.db backup/ &>/dev/null
+    cp /etc/trojan/.trojan.db backup/ &>/dev/null
+    cp /etc/shadowsocks/.shadowsocks.db backup/ &>/dev/null
+    cp -r /etc/limit backup/ &>/dev/null
+    cp -r /var/lib/kyt/. backup/kyt2/ &>/dev/null
+    cp -r /etc/kyt/limit/. backup/kyt-limit/ &>/dev/null
+    cp -r /etc/vmess backup/ &>/dev/null
+    cp -r /etc/trojan backup/ &>/dev/null
+    cp -r /etc/vless backup/ &>/dev/null
+    cp -r /etc/shadowsocks backup/ &>/dev/null
+    cp -r /etc/xray backup/xray &>/dev/null
+    cp -r /var/www/html/ backup/html &>/dev/null
+
+    cd /root
+    ZIPFILE="$IP-$Name-$dateToday.zip"
+    /usr/bin/zip -r "$ZIPFILE" backup >/dev/null 2>&1
+    sleep 1
+
+    echo -e "[ ${BIWhite}INFO${NC} ] » Sending Via Bot... "
+    response=$(curl -s -X POST "https://api.telegram.org/bot${bottoken}/sendDocument" \
+        -F chat_id="${adminid}" \
+        -F caption="» Backup File from VPS: ${Name}" \
+        -F document=@"$ZIPFILE")
+
+    sleep 1
+
+    if [[ $(echo "$response" | jq -r '.ok') != "true" ]]; then
+        echo -e "[ ${RED}ERROR${NC} ] Failed to send document."
+        echo -e "[ ${RED}ERROR${NC} ] Telegram API response: $response"
+        rm -rf /root/backup "/root/$ZIPFILE"
+        exit 1
+    fi
+
+    fileId=$(echo "$response" | jq -r '.result.document.file_id')
+    if [ -z "$fileId" ]; then
+        echo -e "[ ${RED}ERROR${NC} ] Failed to get file ID from the response."
+        echo -e "[ ${RED}ERROR${NC} ] Telegram API response: $response"
+        rm -rf /root/backup "/root/$ZIPFILE"
+        exit 1
+    fi
+
+    echo -e "[ ${BIWhite}INFO${NC} ] » File ID: $fileId"
+    sleep 1
+
+    filePathResponse=$(curl -s -X POST "https://api.telegram.org/bot${bottoken}/getFile" \
+        -d file_id="${fileId}")
+
+    if [[ $(echo "$filePathResponse" | jq -r '.ok') != "true" ]]; then
+        echo -e "[ ${RED}ERROR${NC} ] Failed to get file path."
+        echo -e "[ ${RED}ERROR${NC} ] Telegram API response: $filePathResponse"
+        rm -rf /root/backup "/root/$ZIPFILE"
+        exit 1
+    fi
+
+    filePath=$(echo "$filePathResponse" | jq -r '.result.file_path')
+    echo -e "[ ${BIWhite}INFO${NC} ] » File Path: $filePath"
+    sleep 1
+
+    if [ -n "$filePath" ]; then
+        messageText="<b>File ID:</b> <code>${fileId}</code>%0A<b>File Path:</b> <code>${filePath}</code>"
+        sendMessageResponse=$(curl -s -X POST "https://api.telegram.org/bot${bottoken}/sendMessage" \
+            -d chat_id="${adminid}" \
+            -d text="${messageText}" \
+            -d parse_mode="html")
+
+        if [[ $(echo "$sendMessageResponse" | jq -r '.ok') != "true" ]]; then
+            echo -e "[ ${RED}ERROR${NC} ] Failed to send message with File ID and File Path."
+            echo -e "[ ${RED}ERROR${NC} ] Telegram API response: $sendMessageResponse"
+        fi
+    fi
+
+    echo -e "[ ${BIWhite}INFO${NC} ] » Completed... "
+    sleep 1
+
+    rm -rf /root/backup
+    rm -rf /root/$IP-$Name-$dateToday.zip
+    exit 0
+}
+
+mulai_backupnya

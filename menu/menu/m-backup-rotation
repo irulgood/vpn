@@ -1,0 +1,75 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+CRON_FILE="/etc/cron.d/ari-backup-rotation"
+SCRIPT_FILE="/usr/local/sbin/ari-auto-backup"
+BACKUP_DIR="/root/backup/auto"
+
+write_backup_script() {
+  cat >"$SCRIPT_FILE" <<'EOF'
+#!/bin/bash
+set -e
+BACKUP_DIR="/root/backup/auto"
+RETENTION="${1:-7}"
+mkdir -p "$BACKUP_DIR"
+ts="$(date +%Y%m%d-%H%M%S)"
+tar -czf "$BACKUP_DIR/ari-backup-${ts}.tar.gz" \
+  /etc/xray /etc/vmess /etc/vless /etc/trojan /etc/ssh 2>/dev/null || true
+ls -1t "$BACKUP_DIR"/ari-backup-*.tar.gz 2>/dev/null | tail -n +"$((RETENTION+1))" | xargs -r rm -f
+EOF
+  chmod +x "$SCRIPT_FILE"
+}
+
+set_schedule() {
+  local keep="$1"
+  local cron_expr="$2"
+  write_backup_script
+  echo "${cron_expr} root ${SCRIPT_FILE} ${keep} >/var/log/ari-backup-rotation.log 2>&1" > "$CRON_FILE"
+  chmod 644 "$CRON_FILE"
+  echo -e "${GREEN}Backup terjadwal aktif. Retention ${keep} file.${NC}"
+}
+
+show_status() {
+  clear
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m       BACKUP SCHEDULE + ROTATION           \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  mkdir -p "$BACKUP_DIR"
+  count="$(ls -1 "$BACKUP_DIR"/ari-backup-*.tar.gz 2>/dev/null | wc -l)"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}BACKUP DIR${NC} : $BACKUP_DIR"
+  echo -e "\033[0;34m│  ${GREEN}FILES${NC}      : ${count}"
+  if [ -f "$CRON_FILE" ]; then
+    echo -e "\033[0;34m│  ${GREEN}CRON${NC}       : $(cat "$CRON_FILE")"
+  else
+    echo -e "\033[0;34m│  ${RED}CRON${NC}       : NONAKTIF"
+  fi
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+}
+
+while true; do
+  show_status
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Daily 03:30 + Keep 7                    \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Daily 03:30 + Keep 14                   \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}3.)${NC} Weekly Mon 03:30 + Keep 14              \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}4.)${NC} Run Backup Now                          \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}5.)${NC} Disable Schedule                        \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-5,x] : " opt
+  case "$opt" in
+    1) set_schedule 7 "30 3 * * *"; read -n 1 -s -r -p " Press any key..." ;;
+    2) set_schedule 14 "30 3 * * *"; read -n 1 -s -r -p " Press any key..." ;;
+    3) set_schedule 14 "30 3 * * 1"; read -n 1 -s -r -p " Press any key..." ;;
+    4) write_backup_script; "$SCRIPT_FILE" 7; echo -e "${GREEN}Backup manual selesai.${NC}"; read -n 1 -s -r -p " Press any key..." ;;
+    5) rm -f "$CRON_FILE"; echo -e "${YELLOW}Schedule dimatikan.${NC}"; read -n 1 -s -r -p " Press any key..." ;;
+    x|X) exit 0 ;;
+  esac
+done
+

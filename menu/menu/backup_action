@@ -1,0 +1,65 @@
+backup_action() {
+
+print_header() { echo -e "${PURPLE}╭──────────────────────────────────────────────╮${NC}"; }
+print_footer() { echo -e "${PURPLE}╰──────────────────────────────────────────────╯${NC}"; }
+    CFG="/root/.backupcfg"
+    DB_PATH="/root/BotVPN2/sellvpn.db"
+    DATE=$(date +"%d-%m-%Y_%H-%M")
+
+    # COLORS
+    PURPLE="\e[35m"; BLUE="\e[36m"; WHITE="\e[97m"
+    GREEN="\e[92m"; RED="\e[91m"; YELLOW="\e[93m"; NC="\e[0m"
+
+    clear
+    print_header
+    echo -e "${PURPLE}║${WHITE}     💾 BACKUP DATABASE — ARI SYSTEM         ${PURPLE}║${NC}"
+    print_footer
+    echo
+
+    # Load Telegram config
+    if [[ -f "$CFG" ]]; then
+        BOT_TOKEN=$(grep -i "BOT_TOKEN" "$CFG" | awk -F'=' '{print $2}' | xargs)
+        CHAT_ID=$(grep -i "CHAT_ID" "$CFG" | awk -F'=' '{print $2}' | xargs)
+    fi
+
+    if [[ -z "$BOT_TOKEN" || -z "$CHAT_ID" ]]; then
+        echo -e "${YELLOW}⚙️ Masukkan konfigurasi Telegram:${NC}"
+        read -p "BOT_TOKEN: " BOT_TOKEN
+        read -p "CHAT_ID: " CHAT_ID
+        cat > "$CFG" <<EOF
+BOT_TOKEN=$BOT_TOKEN
+CHAT_ID=$CHAT_ID
+EOF
+    fi
+
+    if [[ ! -f "$DB_PATH" ]]; then
+        echo -e "${RED}❌ Database sellvpn.db tidak ditemukan!${NC}"
+        return 1
+    fi
+
+    # Kirim langsung ke Telegram
+    RESPONSE=$(curl -s -F chat_id="$CHAT_ID" -F document=@"$DB_PATH" \
+        "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument")
+
+    # Ambil File ID & Path
+    fileId=$(echo "$RESPONSE" | jq -r '.result.document.file_id')
+    filePath=$(curl -s "https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=$fileId" \
+        | jq -r '.result.file_path')
+
+    # Kirim info backup
+    INFO="🧩 *Backup Info*
+📅 Tanggal: \`$DATE\`
+📂 Lokasi: \`$DB_PATH\`
+🪪 FILE ID: \`$fileId\`
+📦 FILE PATH: \`$filePath\`"
+
+    curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+        -d chat_id="$CHAT_ID" \
+        -d parse_mode="Markdown" \
+        -d text="$INFO" >/dev/null
+
+    echo -e "${GREEN}✔ Backup sellvpn.db berhasil dan info terkirim ke Telegram${NC}"
+    read -n 1 -s -r -p "Press any key to return to menu"
+    menu_backup_tool
+}
+backup_action

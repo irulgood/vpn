@@ -1,0 +1,174 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+POLICY_FILE="/etc/ari-abuse-policy.conf"
+AUDIT_LOG="/var/log/ari-abuse-audit.log"
+EMERGENCY_FLAG="/etc/ari-emergency-mode"
+
+init_policy() {
+  [ -f "$POLICY_FILE" ] && return 0
+  cat >"$POLICY_FILE" <<'EOF'
+TOP_IP_WARN=120
+TOP_IP_LIMIT=180
+TOP_IP_EMERGENCY=260
+TOP_USER_WARN=120
+TOP_USER_LIMIT=180
+TOP_USER_EMERGENCY=260
+AUTO_ACTION=OFF
+EOF
+}
+
+load_policy() {
+  init_policy
+  # shellcheck disable=SC1090
+  . "$POLICY_FILE"
+  for k in TOP_IP_WARN TOP_IP_LIMIT TOP_IP_EMERGENCY TOP_USER_WARN TOP_USER_LIMIT TOP_USER_EMERGENCY; do
+    eval "v=\${$k}"
+    if ! [[ "$v" =~ ^[0-9]+$ ]]; then
+      eval "$k=0"
+    fi
+  done
+  [ "$AUTO_ACTION" != "ON" ] && AUTO_ACTION="OFF"
+}
+
+is_int() {
+  [[ "$1" =~ ^[0-9]+$ ]]
+}
+
+save_policy() {
+  cat >"$POLICY_FILE" <<EOF
+TOP_IP_WARN=${TOP_IP_WARN}
+TOP_IP_LIMIT=${TOP_IP_LIMIT}
+TOP_IP_EMERGENCY=${TOP_IP_EMERGENCY}
+TOP_USER_WARN=${TOP_USER_WARN}
+TOP_USER_LIMIT=${TOP_USER_LIMIT}
+TOP_USER_EMERGENCY=${TOP_USER_EMERGENCY}
+AUTO_ACTION=${AUTO_ACTION}
+EOF
+}
+
+apply_rate_limit() {
+  iptables -C INPUT -p tcp --syn -m limit --limit 30/second --limit-burst 60 -j ACCEPT 2>/dev/null \
+    || iptables -A INPUT -p tcp --syn -m limit --limit 30/second --limit-burst 60 -j ACCEPT
+  iptables -C INPUT -p tcp --syn -j DROP 2>/dev/null || iptables -A INPUT -p tcp --syn -j DROP
+}
+
+trigger_emergency() {
+  touch "$EMERGENCY_FLAG"
+  for cmd in addssh addws addvless addtr addss trial trialws trialvless trialtr trialss; do
+    p="$(command -v "$cmd" 2>/dev/null)"
+    [ -n "$p" ] && chmod 000 "$p" 2>/dev/null || true
+  done
+  iptables -C INPUT -p tcp --syn -m limit --limit 10/second --limit-burst 20 -j ACCEPT 2>/dev/null \
+    || iptables -A INPUT -p tcp --syn -m limit --limit 10/second --limit-burst 20 -j ACCEPT
+  iptables -C INPUT -p tcp --syn -j DROP 2>/dev/null || iptables -A INPUT -p tcp --syn -j DROP
+}
+
+collect_stats() {
+  top_ip_line="$(ss -tn state established 2>/dev/null | awk 'NR>1{split($5,a,":"); print a[1]}' | sort | uniq -c | sort -nr | head -n 1)"
+  [ -n "$top_ip_line" ] && top_ip_count="$(echo "$top_ip_line" | awk '{print $1}')" && top_ip_addr="$(echo "$top_ip_line" | awk '{print $2}')" || { top_ip_count=0; top_ip_addr="-"; }
+  top_ip="$(ss -tn state established 2>/dev/null | awk 'NR>1{split($5,a,":"); print a[1]}' | sort | uniq -c | sort -nr | head -n 5)"
+
+  top_user="N/A"
+  top_user_count=0
+  top_user_name="-"
+  if [ -f /var/log/xray/access.log ]; then
+    top_user_line="$(awk -F'email:' '/email:/{print $2}' /var/log/xray/access.log 2>/dev/null | awk '{print $1}' | sed '/^$/d' | sort | uniq -c | sort -nr | head -n 1)"
+    [ -n "$top_user_line" ] && top_user_count="$(echo "$top_user_line" | awk '{print $1}')" && top_user_name="$(echo "$top_user_line" | awk '{print $2}')"
+    top_user="$(awk -F'email:' '/email:/{print $2}' /var/log/xray/access.log 2>/dev/null | awk '{print $1}' | sed '/^$/d' | sort | uniq -c | sort -nr | head -n 5)"
+    [ -z "$top_user" ] && top_user="N/A"
+  fi
+}
+
+enforce_policy() {
+  load_policy
+  collect_stats
+  ts="$(date '+%F %T')"
+  action="none"
+  if [ "${top_ip_count:-0}" -ge "${TOP_IP_EMERGENCY:-999999}" ] || [ "${top_user_count:-0}" -ge "${TOP_USER_EMERGENCY:-999999}" ]; then
+    trigger_emergency
+    action="emergency"
+  elif [ "${top_ip_count:-0}" -ge "${TOP_IP_LIMIT:-999999}" ] || [ "${top_user_count:-0}" -ge "${TOP_USER_LIMIT:-999999}" ]; then
+    apply_rate_limit
+    action="rate-limit"
+  elif [ "${top_ip_count:-0}" -ge "${TOP_IP_WARN:-999999}" ] || [ "${top_user_count:-0}" -ge "${TOP_USER_WARN:-999999}" ]; then
+    action="warn"
+  fi
+  echo "$ts action=$action top_ip=${top_ip_addr}:${top_ip_count} top_user=${top_user_name}:${top_user_count}" >> "$AUDIT_LOG"
+  echo -e "${GREEN}Policy dijalankan.${NC} action=${YELLOW}${action}${NC}"
+}
+
+edit_policy() {
+  load_policy
+  echo
+  read -rp "TOP_IP_WARN [${TOP_IP_WARN}]: " v; [ -n "$v" ] && is_int "$v" && TOP_IP_WARN="$v"
+  read -rp "TOP_IP_LIMIT [${TOP_IP_LIMIT}]: " v; [ -n "$v" ] && is_int "$v" && TOP_IP_LIMIT="$v"
+  read -rp "TOP_IP_EMERGENCY [${TOP_IP_EMERGENCY}]: " v; [ -n "$v" ] && is_int "$v" && TOP_IP_EMERGENCY="$v"
+  read -rp "TOP_USER_WARN [${TOP_USER_WARN}]: " v; [ -n "$v" ] && is_int "$v" && TOP_USER_WARN="$v"
+  read -rp "TOP_USER_LIMIT [${TOP_USER_LIMIT}]: " v; [ -n "$v" ] && is_int "$v" && TOP_USER_LIMIT="$v"
+  read -rp "TOP_USER_EMERGENCY [${TOP_USER_EMERGENCY}]: " v; [ -n "$v" ] && is_int "$v" && TOP_USER_EMERGENCY="$v"
+  if [ "$TOP_IP_WARN" -gt "$TOP_IP_LIMIT" ] || [ "$TOP_IP_LIMIT" -gt "$TOP_IP_EMERGENCY" ] || [ "$TOP_USER_WARN" -gt "$TOP_USER_LIMIT" ] || [ "$TOP_USER_LIMIT" -gt "$TOP_USER_EMERGENCY" ]; then
+    echo -e "${RED}Urutan threshold harus WARN <= LIMIT <= EMERGENCY.${NC}"
+    return
+  fi
+  save_policy
+  echo -e "${GREEN}Policy tersimpan di ${POLICY_FILE}${NC}"
+}
+
+toggle_auto_action() {
+  load_policy
+  if [ "$AUTO_ACTION" = "ON" ]; then
+    AUTO_ACTION="OFF"
+  else
+    AUTO_ACTION="ON"
+  fi
+  save_policy
+  echo -e "${GREEN}AUTO_ACTION => ${AUTO_ACTION}${NC}"
+}
+
+load_policy
+collect_stats
+
+while true; do
+  load_policy
+  if [ "$AUTO_ACTION" = "ON" ]; then
+    enforce_policy >/dev/null 2>&1
+  fi
+  collect_stats
+  clear
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m             ABUSE MONITOR PANEL            \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}AUTO_ACTION${NC} : ${AUTO_ACTION}"
+  echo -e "\033[0;34m│  ${GREEN}TOP IP${NC}      : ${top_ip_addr} (${top_ip_count})"
+  echo -e "\033[0;34m│  ${GREEN}TOP USER${NC}    : ${top_user_name} (${top_user_count})"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "${GREEN}Top IP established connections:${NC}"
+  echo "${top_ip:-N/A}"
+  echo
+  echo -e "${GREEN}Top users from xray access log:${NC}"
+  echo "$top_user"
+  echo
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Toggle Auto Action                      \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Edit Threshold Policy                   \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}3.)${NC} Run Policy Now                          \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}4.)${NC} Show Last Audit Log                     \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-4,x] : " opt
+  case "$opt" in
+    1) toggle_auto_action; read -n 1 -s -r -p " Press any key..." ;;
+    2) edit_policy; read -n 1 -s -r -p " Press any key..." ;;
+    3) enforce_policy; read -n 1 -s -r -p " Press any key..." ;;
+    4) clear; tail -n 20 "$AUDIT_LOG" 2>/dev/null || echo "Belum ada audit log."; read -n 1 -s -r -p " Press any key..." ;;
+    x|X) exit 0 ;;
+  esac
+done
+

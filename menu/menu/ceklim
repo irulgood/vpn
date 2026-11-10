@@ -1,0 +1,37 @@
+#!/bin/bash
+# My Telegram : https://t.me/ARI_VPN_STORE
+# ==========================================
+# Color
+GREEN='\e[36m'
+RED='\033[0;31m'
+BGBLUE='\e[1;44m'
+ORANGE='\033[0;33m'
+BLUE='\033[1;36m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+BG='\E[44;1;39m'
+NC='\033[0;37m'
+WHITE='\033[0;37m'
+r="\033[1;31m"  #REDTERANG
+# ==========================================
+clear
+echo " "
+echo -e "$BLUE┌──────────────────────────────────────────┐$NC"
+echo " ";
+if [ -e "/root/log-limit.txt" ]; then
+echo "User Who Violate The Maximum Limit";
+echo "Time - Username - Number of Multilogin"
+echo -e "$BLUE└──────────────────────────────────────────┘$NC"
+cat /root/log-limit.txt
+else
+echo " No user has committed a violation"
+echo " "
+echo " or"
+echo " "
+echo " The user-limit script not been executed."
+fi
+echo " ";
+echo -e "$BLUE└──────────────────────────────────────────┘$NC"
+echo " ";
+read -n 1 -s -r -p "Press any key to back on menu"
+m-sshws

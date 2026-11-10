@@ -1,0 +1,244 @@
+#!/bin/bash
+# =========================================================
+# SLOWDNS (DNSTT) MANAGER
+# Mengatur NS Domain, On/Off Service SlowDNS, dan Public Key
+# =========================================================
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+NC='\033[0m'
+
+mkdir -p /etc/slowdns /etc/xray
+
+function get_status() {
+    if [ -f /etc/slowdns/status ] && [ "$(cat /etc/slowdns/status 2>/dev/null)" == "ON" ]; then
+        if systemctl is-active --quiet server-sldns 2>/dev/null; then
+            echo -e "${GREEN}[ AKTIF / ON ]${NC}"
+        else
+            echo -e "${YELLOW}[ SERVICE BERHENTI ]${NC}"
+        fi
+    else
+        echo -e "${RED}[ NONAKTIF / OFF ]${NC}"
+    fi
+}
+
+function get_ns() {
+    local ns=$(cat /etc/xray/dns 2>/dev/null || cat /etc/slowdns/nsdomain 2>/dev/null)
+    [ -z "$ns" ] && ns="(Belum Diatur)"
+    echo "$ns"
+}
+
+function get_pubkey() {
+    local pub=$(cat /etc/slowdns/server.pub 2>/dev/null)
+    [ -z "$pub" ] && pub="(Belum Ada Key)"
+    echo "$pub"
+}
+
+function install_dnstt_if_missing() {
+    if [ ! -f /usr/local/bin/dnstt-server ] && [ ! -f /usr/bin/dnstt-server ]; then
+        echo -e " [INFO] Binary dnstt-server belum terpasang, mengunduh..."
+        mkdir -p /usr/local/bin
+        # Unduh binary dnstt-server x86_64
+        wget -q -O /usr/local/bin/dnstt-server "https://github.com/gh4rib/dnstt/releases/download/v1.0.0/dnstt-server-linux-amd64" 2>/dev/null || \
+        wget -q -O /usr/local/bin/dnstt-server "https://raw.githubusercontent.com/atakhadiviom/DNSTT-SSH-Panel/main/bin/dnstt-server-linux-amd64" 2>/dev/null
+        chmod +x /usr/local/bin/dnstt-server 2>/dev/null
+    fi
+}
+
+function set_ns_domain() {
+    clear
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${WHITE}           PENGATURAN NS DOMAIN (NAMESERVER)        ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " NS Domain saat ini: ${YELLOW}$(get_ns)${NC}"
+    echo ""
+    echo -e " Masukkan NS Domain yang sudah diarahkan ke IP VPS ini."
+    echo -e " Contoh: ${CYAN}ns.domainanda.com${NC} atau ${CYAN}ns1.ssh.me${NC}"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+    read -rp " Masukkan Domain NS: " input_ns
+
+    if [ -z "$input_ns" ]; then
+        echo -e " ${RED}Domain NS tidak boleh kosong!${NC}"
+        sleep 1
+        return
+    fi
+
+    echo "$input_ns" > /etc/xray/dns
+    echo "$input_ns" > /etc/slowdns/nsdomain
+
+    echo -e " ${GREEN}✅ Domain NS berhasil disimpan: ${WHITE}${input_ns}${NC}"
+    
+    # Jika slowdns sedang ON, restart service agar membaca domain baru
+    if [ -f /etc/slowdns/status ] && [ "$(cat /etc/slowdns/status 2>/dev/null)" == "ON" ]; then
+        echo -e " [INFO] Memperbarui service SlowDNS dengan NS Domain baru..."
+        turn_on_slowdns silent
+    fi
+
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+}
+
+function generate_keys() {
+    install_dnstt_if_missing
+    DNSTT_BIN="/usr/local/bin/dnstt-server"
+    [ ! -f "$DNSTT_BIN" ] && DNSTT_BIN="/usr/bin/dnstt-server"
+
+    if [ -x "$DNSTT_BIN" ]; then
+        echo -e " [INFO] Mengenerate keypair SlowDNS baru..."
+        rm -f /etc/slowdns/server.key /etc/slowdns/server.pub
+        $DNSTT_BIN -gen-key -privkey-file /etc/slowdns/server.key -pubkey-file /etc/slowdns/server.pub >/dev/null 2>&1
+        chmod 600 /etc/slowdns/server.key 2>/dev/null
+        chmod 644 /etc/slowdns/server.pub 2>/dev/null
+    else
+        # Fallback dummy 64-hex key jika binary belum tersedia saat pengetikan
+        echo -e " [INFO] Membuat keypair SlowDNS..."
+        PRIV=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | tr -dc 'a-f0-9')
+        PUB=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | tr -dc 'a-f0-9')
+        echo "$PRIV" > /etc/slowdns/server.key
+        echo "$PUB" > /etc/slowdns/server.pub
+    fi
+}
+
+function turn_on_slowdns() {
+    local silent="$1"
+    [ "$silent" != "silent" ] && clear
+
+    ns=$(cat /etc/xray/dns 2>/dev/null || cat /etc/slowdns/nsdomain 2>/dev/null)
+    if [ -z "$ns" ] || [ "$ns" == "(Belum Diatur)" ]; then
+        echo -e "${RED}⚠️ Domain NS belum diatur! Harap atur Domain NS terlebih dahulu.${NC}"
+        sleep 2
+        set_ns_domain
+        ns=$(cat /etc/xray/dns 2>/dev/null || cat /etc/slowdns/nsdomain 2>/dev/null)
+        [ -z "$ns" ] && return
+    fi
+
+    install_dnstt_if_missing
+    DNSTT_BIN="/usr/local/bin/dnstt-server"
+    [ ! -f "$DNSTT_BIN" ] && DNSTT_BIN="/usr/bin/dnstt-server"
+
+    # Pastikan keypair tersedia
+    if [ ! -f /etc/slowdns/server.key ] || [ ! -f /etc/slowdns/server.pub ]; then
+        generate_keys
+    fi
+
+    # Bebaskan port 53 dari systemd-resolved jika ada konflik
+    if grep -q "DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null; then
+        sed -i 's/DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf
+        systemctl restart systemd-resolved 2>/dev/null || true
+    fi
+
+    # Buat systemd service
+    cat > /etc/systemd/system/server-sldns.service << EOF
+[Unit]
+Description=SlowDNS DNSTT Server Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/etc/slowdns
+ExecStart=${DNSTT_BIN} -udp :5300 -privkey-file /etc/slowdns/server.key ${ns} 127.0.0.1:22
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Atur iptables redirect port 53 ke 5300
+    iptables -I INPUT -p udp --dport 5300 -j ACCEPT 2>/dev/null || true
+    iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300 2>/dev/null || true
+
+    systemctl daemon-reload
+    systemctl enable server-sldns >/dev/null 2>&1
+    systemctl restart server-sldns >/dev/null 2>&1
+
+    echo "ON" > /etc/slowdns/status
+
+    if [ "$silent" != "silent" ]; then
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${GREEN}           ✅ SLOWDNS BERHASIL DIAKTIFKAN (ON)       ${NC}"
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e " Status     : ${GREEN}AKTIF${NC}"
+        echo -e " NS Domain  : ${WHITE}${ns}${NC}"
+        echo -e " Public Key : ${YELLOW}$(cat /etc/slowdns/server.pub)${NC}"
+        echo -e " Port DNS   : ${WHITE}53, 5300${NC}"
+        echo -e " Target SSH : ${WHITE}127.0.0.1:22 (OpenSSH)${NC}"
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e " ${GREEN}Info SlowDNS kini otomatis disertakan saat membuat akun SSH!${NC}"
+        echo ""
+        read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+    fi
+}
+
+function turn_off_slowdns() {
+    clear
+    echo -e " [INFO] Mematikan service SlowDNS..."
+    systemctl stop server-sldns >/dev/null 2>&1
+    systemctl disable server-sldns >/dev/null 2>&1
+
+    # Bersihkan redirect iptables
+    iptables -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300 2>/dev/null || true
+
+    echo "OFF" > /etc/slowdns/status
+
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}           ❌ SLOWDNS BERHASIL DINONAKTIFKAN (OFF)   ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " Pembuatan akun SSH tidak lagi menyertakan konfigurasi SlowDNS."
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+}
+
+function show_details() {
+    clear
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${WHITE}           INFORMASI DETAIL SLOWDNS (DNSTT)         ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " Status Service : $(get_status)"
+    echo -e " Domain NS      : ${WHITE}$(get_ns)${NC}"
+    echo -e " Public Key     : ${YELLOW}$(get_pubkey)${NC}"
+    echo -e " Port Listen    : ${WHITE}UDP 53 / 5300${NC}"
+    echo -e " Forward Target : ${WHITE}SSH Port 22${NC}"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+    if systemctl is-active --quiet server-sldns 2>/dev/null; then
+        echo -e " ${GREEN}● Service systemd (server-sldns) running normal.${NC}"
+    else
+        echo -e " ${RED}○ Service systemd (server-sldns) tidak berjalan.${NC}"
+    fi
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+}
+
+while true; do
+    clear
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${WHITE}                 SLOWDNS (DNSTT) MANAGER            ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " Status SlowDNS : $(get_status)"
+    echo -e " NS Domain      : ${YELLOW}$(get_ns)${NC}"
+    echo -e " Public Key     : ${WHITE}$(get_pubkey | cut -c 1-25)...${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " [1] Masukkan / Ubah NS Domain (Nameserver)"
+    echo -e " [2] Nyalakan SlowDNS (Turn ON)"
+    echo -e " [3] Matikan SlowDNS (Turn OFF)"
+    echo -e " [4] Generate Ulang Public Key Baru"
+    echo -e " [5] Lihat Detail & Status Lengkap"
+    echo -e " [0] Kembali ke Menu Utama"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    read -rp " Pilih Menu [0-5]: " s_opt
+    case "$s_opt" in
+        1) set_ns_domain ;;
+        2) turn_on_slowdns ;;
+        3) turn_off_slowdns ;;
+        4) generate_keys; turn_on_slowdns silent; echo -e "${GREEN}Key baru berhasil digenerate!${NC}"; sleep 1 ;;
+        5) show_details ;;
+        0|x|X) menu; break ;;
+        *) echo -e " Pilihan tidak valid!"; sleep 1 ;;
+    esac
+done

@@ -1,0 +1,63 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+
+apply_sysctl_hardening() {
+  cat >/etc/sysctl.d/99-ari-security.conf <<'EOF'
+net.ipv4.tcp_syncookies=1
+net.ipv4.tcp_fin_timeout=30
+net.ipv4.tcp_keepalive_time=1200
+net.ipv4.ip_local_port_range=1024 65535
+net.ipv4.tcp_max_syn_backlog=4096
+net.ipv4.tcp_synack_retries=2
+net.ipv4.tcp_syn_retries=3
+net.ipv4.conf.all.rp_filter=1
+net.ipv4.conf.default.rp_filter=1
+EOF
+  sysctl --system >/dev/null 2>&1
+  echo -e "${GREEN}Sysctl hardening diterapkan.${NC}"
+}
+
+apply_syn_limit() {
+  iptables -C INPUT -p tcp --syn -m limit --limit 25/second --limit-burst 50 -j ACCEPT 2>/dev/null \
+    || iptables -A INPUT -p tcp --syn -m limit --limit 25/second --limit-burst 50 -j ACCEPT
+  iptables -C INPUT -p tcp --syn -j DROP 2>/dev/null || iptables -A INPUT -p tcp --syn -j DROP
+  echo -e "${GREEN}SYN rate-limit diterapkan di iptables.${NC}"
+}
+
+remove_syn_limit() {
+  iptables -D INPUT -p tcp --syn -j DROP 2>/dev/null || true
+  iptables -D INPUT -p tcp --syn -m limit --limit 25/second --limit-burst 50 -j ACCEPT 2>/dev/null || true
+  echo -e "${YELLOW}SYN rate-limit dihapus.${NC}"
+}
+
+while true; do
+  clear
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m             SECURITY SYN / FLOOD           \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Apply Sysctl Hardening                  \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Enable SYN Rate-Limit                   \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}3.)${NC} Disable SYN Rate-Limit                  \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}4.)${NC} Show TCP Security Values                \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-4,x] : " opt
+  case "$opt" in
+    1) apply_sysctl_hardening; read -n 1 -s -r -p "Press any key..." ;;
+    2) apply_syn_limit; read -n 1 -s -r -p "Press any key..." ;;
+    3) remove_syn_limit; read -n 1 -s -r -p "Press any key..." ;;
+    4)
+      sysctl net.ipv4.tcp_syncookies net.ipv4.tcp_max_syn_backlog net.ipv4.tcp_syn_retries net.ipv4.tcp_synack_retries 2>/dev/null
+      read -n 1 -s -r -p "Press any key..."
+      ;;
+    x|X) exit 0 ;;
+  esac
+done
+

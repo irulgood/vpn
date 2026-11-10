@@ -1,0 +1,2927 @@
+{
+  "schemes": [],
+  "swagger": "2.0",
+  "info": {
+    "description": "",
+    "title": "Potato Tunneling API",
+    "contact": {
+      "name": "Potato.",
+      "url": "https://t.me/aldi_nc"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "2.0"
+  },
+  "host": "",
+  "basePath": "",
+  "paths": {
+    "/vps/changelimbwalltrojan": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit Quota All Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit Quota All Account"
+        ],
+        "summary": "Change Limit Quota All Account",
+        "parameters": [
+          {
+            "description": "reset_bw = yes or no",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.BWAllStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimbwallvless": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit Quota All Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit Quota All Account"
+        ],
+        "summary": "Change Limit Quota All Account",
+        "parameters": [
+          {
+            "description": "reset_bw = yes or no",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.BWAllStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimbwallvmess": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit Quota All Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit Quota All Account"
+        ],
+        "summary": "Change Limit Quota All Account",
+        "parameters": [
+          {
+            "description": "reset_bw = yes or no",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.BWAllStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimbwtrojan": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit Quota Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit Quota Account"
+        ],
+        "summary": "Change Limit Quota Account",
+        "parameters": [
+          {
+            "description": "reset_bw = yes or no",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.BWStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimbwvless": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit Quota Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit Quota Account"
+        ],
+        "summary": "Change Limit Quota Account",
+        "parameters": [
+          {
+            "description": "reset_bw = yes or no",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.BWStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimbwvmess": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit Quota Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit Quota Account"
+        ],
+        "summary": "Change Limit Quota Account",
+        "parameters": [
+          {
+            "description": "reset_bw = yes or no",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.BWStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimipallsshvpn": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP All Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP All Account"
+        ],
+        "summary": "Change Limit IP All Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPAllStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimipalltrojan": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP All Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP All Account"
+        ],
+        "summary": "Change Limit IP All Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPAllStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimipallvless": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP All Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP All Account"
+        ],
+        "summary": "Change Limit IP All Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPAllStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimipallvmess": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP All Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP All Account"
+        ],
+        "summary": "Change Limit IP All Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPAllStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimipsshvpn": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP Account"
+        ],
+        "summary": "Change Limit IP Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimiptrojan": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP Account"
+        ],
+        "summary": "Change Limit IP Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimipvless": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP Account"
+        ],
+        "summary": "Change Limit IP Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/changelimipvmess": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Change Limit IP Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Change Limit IP Account"
+        ],
+        "summary": "Change Limit IP Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.IPStyle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.FeaturesChangeStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/checkconfigsshvpn/{username}": {
+      "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Check Config Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Check Config Account"
+        ],
+        "summary": "Check Config Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/checkconfigtrojan/{username}": {
+      "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Check Config Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Check Config Account"
+        ],
+        "summary": "Check Config Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/checkconfigvless/{username}": {
+      "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Check Config Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Check Config Account"
+        ],
+        "summary": "Check Config Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/checkconfigvmess/{username}": {
+      "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Check Config Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Check Config Account"
+        ],
+        "summary": "Check Config Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/deletesshvpn/{username}": {
+      "delete": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Delete Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Delete Account"
+        ],
+        "summary": "Delete Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.DeleteAccount"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/deletetrojan/{username}": {
+      "delete": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Delete Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Delete Account"
+        ],
+        "summary": "Delete Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.DeleteAccount"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/deletevless/{username}": {
+      "delete": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Delete Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Delete Account"
+        ],
+        "summary": "Delete Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.DeleteAccount"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/deletevmess/{username}": {
+      "delete": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Delete Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Delete Account"
+        ],
+        "summary": "Delete Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.DeleteAccount"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/locksshvpn/{username}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/locktrojan/{username}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/lockvless/{username}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/lockvmess/{username}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/modifysshvpn": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Modify Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Modify Account"
+        ],
+        "summary": "Modify Account",
+        "parameters": [
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/modifytrojan": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Modify Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Modify Account"
+        ],
+        "summary": "Modify Account",
+        "parameters": [
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/modifyvless": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Modify Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Modify Account"
+        ],
+        "summary": "Modify Account",
+        "parameters": [
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/modifyvmess": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Modify Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Modify Account"
+        ],
+        "summary": "Modify Account",
+        "parameters": [
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.ModifyAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/renewsshvpn/{username}/{expired}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Renew Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Renew Account"
+        ],
+        "summary": "Renew Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "expired",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/renewtrojan/{username}/{expired}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Renew Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Renew Account"
+        ],
+        "summary": "Renew Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "expired",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/renewvless/{username}/{expired}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Renew Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Renew Account"
+        ],
+        "summary": "Renew Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "expired",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/renewvmess/{username}/{expired}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Renew Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Renew Account"
+        ],
+        "summary": "Renew Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "expired",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "fill in",
+            "name": "kuota",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.RenewAccountStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/sshvpn": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Create Account"
+        ],
+        "summary": "Create Account",
+        "parameters": [
+          {
+            "description": "body json",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.SshVpnInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.SshVpnStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/trialsshvpn": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Trial Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Trial Account"
+        ],
+        "summary": "Create Trial Account",
+        "parameters": [
+          {
+            "description": "10m",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.TrialAccount"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.SshVpnStyle"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/trialtrojanall": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Trial Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Trial Account"
+        ],
+        "summary": "Create Trial Account",
+        "parameters": [
+          {
+            "description": "10m",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.TrialAccount"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/trialvlessall": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Trial Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Trial Account"
+        ],
+        "summary": "Create Trial Account",
+        "parameters": [
+          {
+            "description": "10m",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.TrialAccount"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/trialvmessall": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Trial Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Trial Account"
+        ],
+        "summary": "Create Trial Account",
+        "parameters": [
+          {
+            "description": "10m",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.TrialAccount"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/trojanall": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Create Account"
+        ],
+        "summary": "Create Account",
+        "parameters": [
+          {
+            "description": "for uuidv2 optional",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.XrayCreateInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/unlocksshvpn/{username}/{password}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "password",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/unlocktrojan/{username}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/unlockvless/{username}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/unlockvmess/{username}": {
+      "patch": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Lock/Unlock Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Lock/Unlock Account"
+        ],
+        "summary": "Lock/Unlock Account",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "fill in",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.LockandUnlocked"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/vlessall": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Create Account"
+        ],
+        "summary": "Create Account",
+        "parameters": [
+          {
+            "description": "for uuidv2 optional",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.XrayCreateInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/vmessall": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "Create Account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Create Account"
+        ],
+        "summary": "Create Account",
+        "parameters": [
+          {
+            "description": "for uuidv2 optional",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.XrayCreateInput"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Create_xray"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/models.ResponseHandlerOld"
+            }
+          }
+        }
+      }
+    },
+    "/vps/recoverysshvpn": {
+      "post": {
+        "tags": [
+          "Recovery Account"
+        ],
+        "summary": "Recovery Account SSH / OpenVPN",
+        "description": "Memulihkan akun SSH kadaluarsa/terhapus dengan kredensial asli",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecoveryInputSSH"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.SshVpnStyle"
+            }
+          }
+        }
+      }
+    },
+    "/vps/recoveryvmess": {
+      "post": {
+        "tags": [
+          "Recovery Account"
+        ],
+        "summary": "Recovery Account VMess",
+        "description": "Memulihkan akun VMess kadaluarsa/terhapus dengan UUID asli",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecoveryInputXray"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Data"
+            }
+          }
+        }
+      }
+    },
+    "/vps/recoveryvless": {
+      "post": {
+        "tags": [
+          "Recovery Account"
+        ],
+        "summary": "Recovery Account VLESS",
+        "description": "Memulihkan akun VLESS kadaluarsa/terhapus dengan UUID asli",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecoveryInputXray"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Data"
+            }
+          }
+        }
+      }
+    },
+    "/vps/recoverytrojan": {
+      "post": {
+        "tags": [
+          "Recovery Account"
+        ],
+        "summary": "Recovery Account Trojan",
+        "description": "Memulihkan akun Trojan kadaluarsa/terhapus dengan password/key asli",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecoveryInputXray"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/models.Data"
+            }
+          }
+        }
+      }
+    },
+    "/vps/recovery": {
+      "post": {
+        "tags": [
+          "Recovery Account"
+        ],
+        "summary": "General Recovery Account",
+        "description": "Memulihkan akun apa pun (SSH/VMess/VLESS/Trojan) via protokol terpadu",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecoveryInputGeneral"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/vps/recoverylist": {
+      "get": {
+        "tags": [
+          "Recovery Account"
+        ],
+        "summary": "List Akun Expired / Siap Direcovery",
+        "description": "Mengambil daftar akun yang kadaluarsa atau terhapus dari sistem untuk dipulihkan",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "models.BWAllStyle": {
+      "type": "object",
+      "required": [
+        "kuota",
+        "reset_bw"
+      ],
+      "properties": {
+        "kuota": {
+          "type": "integer"
+        },
+        "reset_bw": {
+          "type": "string"
+        }
+      }
+    },
+    "models.BWStyle": {
+      "type": "object",
+      "required": [
+        "kuota",
+        "reset_bw",
+        "username"
+      ],
+      "properties": {
+        "kuota": {
+          "type": "integer"
+        },
+        "reset_bw": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "models.Create_xray": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/models.Data"
+        },
+        "meta": {
+          "$ref": "#/definitions/models.Meta"
+        }
+      }
+    },
+    "models.Data": {
+      "type": "object",
+      "properties": {
+        "CITY": {
+          "type": "string"
+        },
+        "ISP": {
+          "type": "string"
+        },
+        "expired": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "link": {
+          "$ref": "#/definitions/models.Link"
+        },
+        "path": {
+          "$ref": "#/definitions/models.Path"
+        },
+        "port": {
+          "$ref": "#/definitions/models.Port"
+        },
+        "time": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "uuid": {
+          "type": "string"
+        }
+      }
+    },
+    "models.DeleteAccount": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "models.FeaturesChangeStyle": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "models.IPAllStyle": {
+      "type": "object",
+      "required": [
+        "limitip"
+      ],
+      "properties": {
+        "limitip": {
+          "type": "integer"
+        }
+      }
+    },
+    "models.IPStyle": {
+      "type": "object",
+      "required": [
+        "limitip",
+        "username"
+      ],
+      "properties": {
+        "limitip": {
+          "type": "integer"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "models.Link": {
+      "type": "object",
+      "properties": {
+        "grpc": {
+          "type": "string"
+        },
+        "none": {
+          "type": "string"
+        },
+        "tls": {
+          "type": "string"
+        },
+        "upntls": {
+          "type": "string"
+        },
+        "uptls": {
+          "type": "string"
+        }
+      }
+    },
+    "models.LockandUnlocked": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "expired": {
+              "type": "string"
+            },
+            "pass_uuid": {
+              "type": "string"
+            },
+            "status_lock": {
+              "type": "string"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "models.Meta": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer"
+        },
+        "ip_address": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "models.ModifyAccountInput": {
+      "type": "object",
+      "required": [
+        "pass_uuid",
+        "username"
+      ],
+      "properties": {
+        "pass_uuid": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "models.ModifyAccountStyle": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "pass_uuid": {
+              "type": "string"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "models.Path": {
+      "type": "object",
+      "properties": {
+        "grpc": {
+          "type": "string"
+        },
+        "multi": {
+          "type": "string"
+        },
+        "stn": {
+          "type": "string"
+        },
+        "up": {
+          "type": "string"
+        }
+      }
+    },
+    "models.Port": {
+      "type": "object",
+      "properties": {
+        "any": {
+          "type": "string"
+        },
+        "none": {
+          "type": "string"
+        },
+        "tls": {
+          "type": "string"
+        }
+      }
+    },
+    "models.RenewAccountInput": {
+      "type": "object",
+      "properties": {
+        "kuota": {
+          "type": "integer"
+        }
+      }
+    },
+    "models.RenewAccountStyle": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string"
+            },
+            "quota": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "models.ResponseHandlerOld": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object"
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "models.SshVpnInput": {
+      "type": "object",
+      "required": [
+        "expired",
+        "limitip",
+        "password",
+        "username"
+      ],
+      "properties": {
+        "expired": {
+          "type": "integer"
+        },
+        "limitip": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "models.SshVpnStyle": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "CITY": {
+              "type": "string"
+            },
+            "ISP": {
+              "type": "string"
+            },
+            "exp": {
+              "type": "string"
+            },
+            "hostname": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "payloadws": {
+              "type": "object",
+              "properties": {
+                "payloadcdn": {
+                  "type": "string"
+                },
+                "payloadwithpath": {
+                  "type": "string"
+                }
+              }
+            },
+            "port": {
+              "type": "object",
+              "properties": {
+                "any": {
+                  "type": "string"
+                },
+                "none": {
+                  "type": "string"
+                },
+                "ovpnohp": {
+                  "type": "integer"
+                },
+                "ovpntcp": {
+                  "type": "integer"
+                },
+                "ovpnudp": {
+                  "type": "integer"
+                },
+                "slowdns": {
+                  "type": "string"
+                },
+                "squid": {
+                  "type": "integer"
+                },
+                "sshohp": {
+                  "type": "integer"
+                },
+                "tls": {
+                  "type": "string"
+                },
+                "udpcustom": {
+                  "type": "string"
+                },
+                "udpgw": {
+                  "type": "string"
+                }
+              }
+            },
+            "pubkey": {
+              "type": "string"
+            },
+            "servername": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "integer"
+            },
+            "ip_address": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "models.TrialAccount": {
+      "type": "object",
+      "required": [
+        "timelimit"
+      ],
+      "properties": {
+        "timelimit": {
+          "type": "string"
+        }
+      }
+    },
+    "models.XrayCreateInput": {
+      "type": "object",
+      "required": [
+        "expired",
+        "kuota",
+        "limitip",
+        "username"
+      ],
+      "properties": {
+        "expired": {
+          "type": "integer"
+        },
+        "kuota": {
+          "type": "integer"
+        },
+        "limitip": {
+          "type": "integer"
+        },
+        "username": {
+          "type": "string"
+        },
+        "uuidv2": {
+          "type": "string"
+        }
+      }
+    },
+    "RecoveryInputSSH": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "testuser"
+        },
+        "password": {
+          "type": "string",
+          "example": "1"
+        },
+        "expired": {
+          "type": "integer",
+          "example": 30
+        },
+        "limitip": {
+          "type": "string",
+          "example": "2"
+        },
+        "kuota": {
+          "type": "string",
+          "example": "0"
+        }
+      },
+      "required": [
+        "username"
+      ]
+    },
+    "RecoveryInputXray": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "testuser"
+        },
+        "uuid": {
+          "type": "string",
+          "example": "b1a118e6-1234-4567-89ab-cdef01234567"
+        },
+        "expired": {
+          "type": "integer",
+          "example": 30
+        },
+        "limitip": {
+          "type": "string",
+          "example": "2"
+        },
+        "kuota": {
+          "type": "string",
+          "example": "0"
+        }
+      },
+      "required": [
+        "username"
+      ]
+    },
+    "RecoveryInputGeneral": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "enum": [
+            "ssh",
+            "vmess",
+            "vless",
+            "trojan"
+          ],
+          "example": "ssh"
+        },
+        "username": {
+          "type": "string",
+          "example": "testuser"
+        },
+        "password": {
+          "type": "string",
+          "example": "1"
+        },
+        "uuid": {
+          "type": "string",
+          "example": "b1a118e6-1234-4567-89ab-cdef01234567"
+        },
+        "expired": {
+          "type": "integer",
+          "example": 30
+        },
+        "limitip": {
+          "type": "string",
+          "example": "2"
+        },
+        "kuota": {
+          "type": "string",
+          "example": "0"
+        }
+      },
+      "required": [
+        "username",
+        "protocol"
+      ]
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}

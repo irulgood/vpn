@@ -1,0 +1,124 @@
+#!/bin/bash
+clear
+NC='\e[0m'
+BIWhite='\033[1;97m'
+BIYellow='\033[0;33m'
+Purple='\e[35m'
+Green='\033[0;32m'
+Red='\033[0;31m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+
+# Efek tambahan
+BLINK_GREEN="\033[5;32m"
+BLINK_RED="\033[5;31m"
+
+# Background
+BG_BLU="\033[1;96m" # BG BIRU
+mkdir -p /etc/vmess/
+mkdir -p /etc/kyt/limit/vmess/ip/
+mkdir -p /etc/kyt/limit/vmess/
+LOCK_FILE="/etc/user_locks.db" 
+
+function convert_size() {
+    local -i bytes=$1
+    if [[ $bytes -lt 1024 ]]; then
+        echo "${bytes} B"
+    elif [[ $bytes -lt 1048576 ]]; then
+        echo "$(( (bytes + 1023)/1024 )) KB"
+    elif [[ $bytes -lt 1073741824 ]]; then
+        echo "$(( (bytes + 1048575)/1048576 )) MB"
+    else
+        echo "$(( (bytes + 1073741823)/1073741824 )) GB"
+    fi
+}
+
+function is_tethering_ip() {
+    local ip="$1"
+    local tethering_prefixes=(
+        "192.168.43." "192.168.42." "192.168.44." "192.168.1."
+        "192.168.0." "172.20." "10.0.0." "172.16." "192.168.137."
+    )
+    for prefix in "${tethering_prefixes[@]}"; do
+        if [[ "$ip" == "$prefix"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+clear
+echo -e "${PURPLE}-------------------------------------------${NC}"
+echo -e " ${BG_BLU}          CEK VMESS LOGIN               ${NC}"
+echo -e "${PURPLE}-------------------------------------------${NC}"
+
+users=()
+if [ -f "/etc/vmess/.vmess.db" ]; then
+    users=( $(grep -E '^### ' /etc/vmess/.vmess.db | awk '{print $2}' | sort -u) )
+fi
+if [ ${#users[@]} -eq 0 ] && [ -f "/etc/xray/config.json" ]; then
+    users=( $(grep '###' /etc/xray/config.json 2>/dev/null | awk '{print $2}' | sort -u) )
+fi
+
+now=$(date +%s)
+
+for user in "${users[@]}"; do
+    [[ -z "$user" ]] && continue 
+    > /tmp/ipvmess.txt
+
+    raw_connected_ips=($(grep -w "$user" /var/log/xray/access.log | tail -n 500 | grep -oP '\sfrom\s\K[0-9]{1,3}(\.[0-9]{1,3}){3}' | sort -u))
+
+    active_ips_filtered=()
+    ip_count=0
+
+    for ip in "${raw_connected_ips[@]}"; do
+        if ! is_tethering_ip "$ip"; then
+            active_ips_filtered+=("$ip")
+            ((ip_count++))
+        fi
+    done
+
+    if [[ "$ip_count" -gt 0 ]]; then 
+        limit_quota=$(convert_size "$(cat /etc/vmess/"$user" 2>/dev/null || echo 0)")
+        usage_quota=$(convert_size "$(cat "/etc/limit/vmess/${user}" 2>/dev/null || echo 0)")
+        limit_ip=$(cat /etc/kyt/limit/vmess/ip/"$user" 2>/dev/null || echo "Tidak Dibatasi")
+        
+        last_login_raw_time_only=$(grep -w "$user" /var/log/xray/access.log | tail -n 1 | awk '{print $1, $2}')
+        last_login_timestamp=$(date -d "$last_login_raw_time_only" +%s 2>/dev/null || echo 0)
+        time_diff=$((now - last_login_timestamp))
+
+        if [[ "$last_login_timestamp" -eq 0 ]]; then
+            online_status="${BIWhite}N/A${NC}"
+        elif [[ "$time_diff" -le 60 ]]; then
+            online_status="✅ONLINE✅  "
+        else
+            online_status="❌OFFLINE❌  "
+        fi
+
+        total_log_count=$(grep -w "$user" /var/log/xray/access.log | tail -n 500 | wc -l)
+
+        echo -e "${CYAN}┌────────────────────────────────────┐${NC}"
+        printf "${CYAN}│ %-35s│${NC}\n" "User          : ${user}"
+        printf "${CYAN}│ %-37s│${NC}\n" "Status        : ${online_status}   "
+        printf "${CYAN}│ %-35s│${NC}\n" "Kuota         : ${usage_quota} / ${limit_quota}" 
+        printf "${CYAN}│ %-35s│${NC}\n" "Limit IP      : ${limit_ip} IP"
+        printf "${CYAN}│ %-35s│${NC}\n" "IP Aktif      : ${ip_count} IP"
+        printf "${CYAN}│ %-35s│${NC}\n" "Total Log     : ${total_log_count}"
+        
+        if [[ "$ip_count" -gt 0 ]]; then
+            echo -e "${CYAN}├────────────────────────────────────┤${NC}"
+            echo -e "${CYAN}│ Alamat IP:                         │${NC}"
+            for i in "${!active_ips_filtered[@]}"; do
+                printf "${CYAN}│ %-4s %-29s │${NC}\n" "$((i+1)) )" "${active_ips_filtered[$i]}" 
+            done
+        fi
+        echo -e "${CYAN}└────────────────────────────────────┘${NC}"
+        echo "" 
+    fi
+done
+
+# Kosongkan baris bawah agar tidak menghapus riwayat log
+# echo -n > /var/log/xray/access.log
+echo -e "${PURPLE}-------------------------------------------${NC}"
+read -n 1 -s -r -p "Press any key to back on menu"
+m-vmess

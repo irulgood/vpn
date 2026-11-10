@@ -1,0 +1,46 @@
+#!/bin/bash
+
+yellow="\033[0;33m"
+ungu="\033[0;35m"
+Red="\033[91;1m"
+YELLOW="\033[93;1m"
+Xark=""
+BlueCyan=""
+Cyan="\033[96;1m"
+Purple="\033[95;1m"
+Green="\033[92;1m"
+WhiteBe="\033[5;37m"
+GreenBe="\033[5;32m"
+YellowBe="\033[5;33m"
+BlueBe="\033[5;34m"
+nama=$(cat /etc/xray/username)
+clear
+read -p "input username: " user
+limit_file="/etc/kyt/limit/ssh/ip/$user"
+if [ -e "$limit_file" ]; then
+# Validasi apakah file batasan IP sudah ada
+  read -p "Input New Ip   : " new_iplimit
+  # Validasi jika masukan kosong
+  if [ -z "$new_iplimit" ]; then
+    echo -e " Invallid !! "
+  else
+    echo "$new_iplimit" > "$limit_file"
+	clear
+	echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "            Succesfully  "
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e " New Ip   : $new_iplimit  "
+    echo -e " Username : $user  "
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit
+	fi
+else
+clear
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo -e "           Sorry  "
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo -e " Username   : $user "
+  echo -e " IP LIMIT   : invallid !!  "
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+exit 
+fi

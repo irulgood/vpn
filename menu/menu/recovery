@@ -1,0 +1,314 @@
+#!/bin/bash
+# =========================================================
+# RECOVERY AKUN EXPIRED (SSH, VMESS, VLESS, TROJAN)
+# Untuk memulihkan akun pelanggan yang lupa diperpanjang /
+# terlanjur terhapus oleh auto-delete (xp)
+# =========================================================
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+NC='\033[0m'
+
+TODAY=$(date +"%Y-%m-%d")
+TODAY_SEC=$(date -d "$TODAY" +%s)
+
+function header() {
+    clear
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${WHITE}           RECOVERY AKUN KADALUARSA / EXPIRED       ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " ${YELLOW}Fitur ini memulihkan akun pelanggan yang lupa di-renew${NC}"
+    echo -e " ${YELLOW}dengan Username, Password, dan UUID yang SAMA PERSIS.${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+function recover_ssh() {
+    header
+    echo -e "           ${GREEN}[ RECOVERY AKUN SSH & OPENVPN ]${NC}"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+    if [ ! -f /etc/ssh/.ssh.db ]; then
+        echo -e " ${RED}Database /etc/ssh/.ssh.db tidak ditemukan!${NC}"
+        read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+        return
+    fi
+
+    # Ambil list akun expired
+    declare -a expired_users=()
+    declare -a expired_pass=()
+    declare -a expired_dates=()
+    declare -a expired_limits=()
+    declare -a expired_quotas=()
+
+    while IFS= read -r line; do
+        parts=($line)
+        if [[ "${parts[0]}" == "#ssh#" && -n "${parts[1]}" ]]; then
+            u="${parts[1]}"
+            p="${parts[2]}"
+            q="${parts[3]}"
+            l="${parts[4]}"
+            exp="${parts[5]}"
+
+            is_exp=0
+            # Cek tanggal
+            if [ -n "$exp" ]; then
+                exp_sec=$(date -d "$exp" +%s 2>/dev/null || echo 0)
+                if [ $exp_sec -le $TODAY_SEC ]; then
+                    is_exp=1
+                fi
+            fi
+            # Cek apakah user hilang dari passwd
+            if ! id "$u" >/dev/null 2>&1; then
+                is_exp=1
+            fi
+
+            if [ $is_exp -eq 1 ]; then
+                expired_users+=("$u")
+                expired_pass+=("$p")
+                expired_dates+=("$exp")
+                expired_limits+=("$l")
+                expired_quotas+=("$q")
+            fi
+        fi
+    done < /etc/ssh/.ssh.db
+
+    total=${#expired_users[@]}
+    if [ $total -eq 0 ]; then
+        echo -e " ${GREEN}Tidak ada akun SSH yang berstatus expired / kadaluarsa.${NC}"
+        echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+        read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+        return
+    fi
+
+    printf " %-4s %-16s %-12s %-12s\n" "NO" "USERNAME" "EXP LAMA" "PASSWORD"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+    for ((i=0; i<$total; i++)); do
+        printf " %-4s %-16s %-12s %-12s\n" "$((i+1))" "${expired_users[$i]}" "${expired_dates[$i]}" "${expired_pass[$i]}"
+    done
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+
+    read -rp " Pilih Nomor / Ketik Username yang ingin di-recover: " chosen
+    [ -z "$chosen" ] && return
+
+    target_user=""
+    target_pass=""
+    target_lim="2"
+    target_q="0"
+
+    if [[ "$chosen" =~ ^[0-9]+$ ]] && [ "$chosen" -ge 1 ] && [ "$chosen" -le $total ]; then
+        idx=$((chosen - 1))
+        target_user="${expired_users[$idx]}"
+        target_pass="${expired_pass[$idx]}"
+        target_lim="${expired_limits[$idx]}"
+        target_q="${expired_quotas[$idx]}"
+    else
+        for ((i=0; i<$total; i++)); do
+            if [ "${expired_users[$i]}" == "$chosen" ]; then
+                target_user="${expired_users[$i]}"
+                target_pass="${expired_pass[$idx]}"
+                target_lim="${expired_limits[$idx]}"
+                target_q="${expired_quotas[$idx]}"
+                break
+            fi
+        done
+    fi
+
+    if [ -z "$target_user" ]; then
+        echo -e " ${RED}Pilihan tidak valid!${NC}"
+        sleep 2
+        return
+    fi
+
+    read -rp " Masa Aktif Baru (hari, misal: 30): " days
+    days=${days:-30}
+    new_exp=$(date -d "+$days days" +"%Y-%m-%d")
+
+    # Pulihkan user ke Linux OS
+    useradd -e "$new_exp" -s /bin/false -m "$target_user" 2>/dev/null || chage -E "$new_exp" "$target_user"
+    echo "${target_user}:${target_pass}" | chpasswd 2>/dev/null
+    passwd -u "$target_user" >/dev/null 2>&1
+
+    # Update database
+    sed -i "/^#ssh# ${target_user} /d" /etc/ssh/.ssh.db
+    echo "#ssh# ${target_user} ${target_pass} ${target_q} ${target_lim} ${new_exp}" >> /etc/ssh/.ssh.db
+
+    # Pulihkan file limit
+    mkdir -p /etc/kyt/limit/ssh/ip
+    echo "$target_lim" > "/etc/kyt/limit/ssh/ip/${target_user}"
+
+    # Hapus dari lock file jika ada
+    sed -i "/^ssh:${target_user}:/d" /etc/user_locks.db 2>/dev/null
+
+    echo ""
+    echo -e " ${GREEN}✅ Akun SSH '${target_user}' Berhasil Dipulihkan!${NC}"
+    echo -e " Expired Baru : ${WHITE}${new_exp}${NC}"
+    echo -e " Password     : ${WHITE}${target_pass}${NC}"
+    echo -e " Limit IP     : ${WHITE}${target_lim} IP${NC}"
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+}
+
+function recover_xray() {
+    proto="$1" # vmess, vless, trojan
+    pfx="$2"   # ###, #&, #!
+    header
+    echo -e "           ${GREEN}[ RECOVERY AKUN ${proto^^} ]${NC}"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+
+    db_file="/etc/${proto}/.${proto}.db"
+    if [ ! -f "$db_file" ]; then
+        echo -e " ${RED}Database ${db_file} tidak ditemukan!${NC}"
+        read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+        return
+    fi
+
+    declare -a expired_users=()
+    declare -a expired_uuid=()
+    declare -a expired_dates=()
+    declare -a expired_limits=()
+    declare -a expired_quotas=()
+
+    while IFS= read -r line; do
+        parts=($line)
+        if [[ "${parts[0]}" == "$pfx" && -n "${parts[1]}" ]]; then
+            u="${parts[1]}"
+            exp="${parts[2]}"
+            uuid="${parts[3]}"
+            q="${parts[4]:-0}"
+            l="${parts[5]:-2}"
+
+            is_exp=0
+            if [ -n "$exp" ]; then
+                exp_sec=$(date -d "$exp" +%s 2>/dev/null || echo 0)
+                if [ $exp_sec -le $TODAY_SEC ]; then
+                    is_exp=1
+                fi
+            fi
+            # Cek jika hilang dari config xray
+            if ! grep -qE "^\\${pfx} ${u} " /etc/xray/config.json 2>/dev/null; then
+                is_exp=1
+            fi
+
+            if [ $is_exp -eq 1 ]; then
+                expired_users+=("$u")
+                expired_uuid+=("$uuid")
+                expired_dates+=("$exp")
+                expired_limits+=("$l")
+                expired_quotas+=("$q")
+            fi
+        fi
+    done < "$db_file"
+
+    total=${#expired_users[@]}
+    if [ $total -eq 0 ]; then
+        echo -e " ${GREEN}Tidak ada akun ${proto^^} yang berstatus expired / kadaluarsa.${NC}"
+        echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+        read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+        return
+    fi
+
+    printf " %-4s %-16s %-12s %-20s\n" "NO" "USERNAME" "EXP LAMA" "UUID/KEY"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+    for ((i=0; i<$total; i++)); do
+        printf " %-4s %-16s %-12s %-20s\n" "$((i+1))" "${expired_users[$i]}" "${expired_dates[$i]}" "${expired_uuid[$i]:0:18}..."
+    done
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+
+    read -rp " Pilih Nomor / Ketik Username yang ingin di-recover: " chosen
+    [ -z "$chosen" ] && return
+
+    target_user=""
+    target_uuid=""
+    target_lim="2"
+    target_q="0"
+
+    if [[ "$chosen" =~ ^[0-9]+$ ]] && [ "$chosen" -ge 1 ] && [ "$chosen" -le $total ]; then
+        idx=$((chosen - 1))
+        target_user="${expired_users[$idx]}"
+        target_uuid="${expired_uuid[$idx]}"
+        target_lim="${expired_limits[$idx]}"
+        target_q="${expired_quotas[$idx]}"
+    else
+        for ((i=0; i<$total; i++)); do
+            if [ "${expired_users[$i]}" == "$chosen" ]; then
+                target_user="${expired_users[$i]}"
+                target_uuid="${expired_uuid[$i]}"
+                target_lim="${expired_limits[$i]}"
+                target_q="${expired_quotas[$i]}"
+                break
+            fi
+        done
+    fi
+
+    if [ -z "$target_user" ]; then
+        echo -e " ${RED}Pilihan tidak valid!${NC}"
+        sleep 2
+        return
+    fi
+
+    read -rp " Masa Aktif Baru (hari, misal: 30): " days
+    days=${days:-30}
+    new_exp=$(date -d "+$days days" +"%Y-%m-%d")
+
+    # Bersihkan sisa entri lama di config xray jika ada
+    sed -i "/^\\${pfx} ${target_user} /,/^}},/d" /etc/xray/config.json 2>/dev/null
+
+    # Injeksi kembali ke config xray
+    if [ "$proto" == "vmess" ]; then
+        sed -i "/#vmess$/a\\### ${target_user} ${new_exp}\\n},{\"id\": \"${target_uuid}\",\"alterId\": 0,\"email\": \"${target_user}\"}" /etc/xray/config.json
+        sed -i "/#vmessgrpc$/a\\### ${target_user} ${new_exp}\\n},{\"id\": \"${target_uuid}\",\"alterId\": 0,\"email\": \"${target_user}\"}" /etc/xray/config.json
+    elif [ "$proto" == "vless" ]; then
+        sed -i "/#vless$/a\\#& ${target_user} ${new_exp}\\n},{\"id\": \"${target_uuid}\",\"email\": \"${target_user}\"}" /etc/xray/config.json
+        sed -i "/#vlessgrpc$/a\\#& ${target_user} ${new_exp}\\n},{\"id\": \"${target_uuid}\",\"email\": \"${target_user}\"}" /etc/xray/config.json
+    elif [ "$proto" == "trojan" ]; then
+        sed -i "/#trojanws$/a\\#! ${target_user} ${new_exp}\\n},{\"password\": \"${target_uuid}\",\"email\": \"${target_user}\"}" /etc/xray/config.json
+        sed -i "/#trojangrpc$/a\\#! ${target_user} ${new_exp}\\n},{\"password\": \"${target_uuid}\",\"email\": \"${target_user}\"}" /etc/xray/config.json
+    fi
+
+    # Update database .db
+    sed -i "/^\\${pfx} ${target_user} /d" "$db_file"
+    echo "${pfx} ${target_user} ${new_exp} ${target_uuid} ${target_q} ${target_lim}" >> "$db_file"
+
+    # Pulihkan limit file
+    mkdir -p "/etc/kyt/limit/${proto}/ip"
+    echo "$target_lim" > "/etc/kyt/limit/${proto}/ip/${target_user}"
+
+    # Hapus dari user_locks.db
+    sed -i "/^${proto}:${target_user}:/d" /etc/user_locks.db 2>/dev/null
+
+    # Reload xray
+    systemctl restart xray >/dev/null 2>&1
+
+    domain=$(cat /etc/xray/domain 2>/dev/null || echo "127.0.0.1")
+
+    echo ""
+    echo -e " ${GREEN}✅ Akun ${proto^^} '${target_user}' Berhasil Dipulihkan!${NC}"
+    echo -e " Expired Baru : ${WHITE}${new_exp}${NC}"
+    echo -e " UUID / Key   : ${WHITE}${target_uuid}${NC}"
+    echo -e " Limit IP     : ${WHITE}${target_lim} IP${NC}"
+    echo -e " Config HP    : ${YELLOW}Config lama pelanggan langsung aktif kembali tanpa perlu ubah link!${NC}"
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+}
+
+while true; do
+    header
+    echo -e " [1] Recovery Akun SSH & OpenVPN"
+    echo -e " [2] Recovery Akun VMess"
+    echo -e " [3] Recovery Akun VLESS"
+    echo -e " [4] Recovery Akun Trojan"
+    echo -e " [0] Kembali ke Menu Utama"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    read -rp " Pilih Menu [0-4]: " menu_opt
+    case "$menu_opt" in
+        1) recover_ssh ;;
+        2) recover_xray "vmess" "###" ;;
+        3) recover_xray "vless" "#&" ;;
+        4) recover_xray "trojan" "#!" ;;
+        0|x|X) menu; break ;;
+        *) echo -e " Pilihan tidak tersedia!"; sleep 1 ;;
+    esac
+done

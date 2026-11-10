@@ -1,0 +1,123 @@
+#!/bin/bash
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+#########################
+[[ ! -f /usr/bin/git ]] && apt install git -y &> /dev/null
+# COLOR VALIDATION
+clear
+y='\033[1;93m'
+c="\033[0;36m"
+g="\e[92;1m"
+r="\033[1;31m"
+NC='\e[0m'
+gray="\e[1;30m"
+Blue="\033[1;36m"
+GREEN='\033[0;32m'
+grenbo="\033[1;95m"
+yell='\e[33m'
+BGX="\033[42m"
+END='\e[0m'
+bc="\e[5;36m"
+ungu='\033[0;35m'
+Green_background="\033[42;37m"
+Red_background="\033[41;37m"
+Suffix="\033[0m"
+NC='\e[0m'
+nama=$(cat /etc/xray/username)
+#################
+CHATIDD=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 3)
+CHATID="1210833546"
+KEY="6006599143:AAEgstCAioq35JgX97HaW_G3TAkLKzLZS_w"
+TIMES="10"
+URL="https://api.telegram.org/bot$KEY/sendMessage"
+MYIP=$(curl -sS ipv4.icanhazip.com)
+TOKEN=""
+REPO="$(cat /etc/repo)"
+EMAIL="alnurridwan112@gmail.com"
+USER="myridwan"
+
+function lane() {
+echo -e "${bc} ————————————————————————————————————————${NC}"
+}
+
+function LOGO() {
+echo -e ""
+lane
+echo -e "${ungu}            $nama            "
+lane
+echo -e ""
+}
+
+function register() {
+echo -e "${ungu}               Register IP              ${Suffix}"
+}
+
+function Credit_nbstore() {
+sleep 1
+echo -e "" 
+lane
+echo -e "${ungu}      Terimakasih sudah menggunakan-"
+echo -e "         Script Credit by $nama"
+lane
+echo -e ""
+exit 0
+}
+
+function del() {
+clear
+read -p "   VERIFIKASI ADMIN :   " host11
+if [[ $host11 == 123@Xwan ]]; then
+clear
+mkdir /root/izinvps
+cd /root/izinvps	
+wget -O ip "${REPO}"
+	LOGO
+    echo ""
+    lane
+    echo -e "${g}         LIST IP VPS          $NC"
+    lane
+    grep -E "^###" "/root/izinvps/ipx" | cut -d ' ' -f 2-6 | column -t | sort | uniq
+    lane
+	echo ""
+    read -p "Input IP Address To Delete : " ipdel
+    name=$(cat /root/izinvps/ipx | grep $ipdel | cut -d " " -f2)
+    exp=$(cat /root/izinvps/ipx | grep $ipdel | cut -d " " -f3)
+    sed -i "/^### $name $exp $ipdel/d" /root/izinvps/ipx
+    git config --global user.email "${EMAIL}" &> /dev/null
+    git config --global user.name "${USER}" &> /dev/null
+    rm -rf .git &> /dev/null
+    git init &> /dev/null
+    git add . &> /dev/null
+    git commit -m izin &> /dev/null
+    git branch -M ipuk &> /dev/null
+	git remote add origin https://github.com/${USER}/izinvps.git
+	git push -f https://${TOKEN}@github.com/${USER}/izinvps.git
+    rm -rf /root/izinvps
+    clear
+CHATIDD="$CHATIDD"
+CHATID="$CHATID"
+KEY="$KEY"
+TIME="10"
+URL="https://api.telegram.org/bot$KEY/sendMessage"
+TEXT="
+<code>───────────────────────────</code>
+<code>    SUCCESS DELETE IP VPS</code>
+<code>───────────────────────────</code>
+<code>USERNAME       : $name</code>
+<code>IP Address     : $ipdel</code>
+<code>Expired On     : $exp</code>
+<code>───────────────────────────</code>
+"
+curl -s --max-time $TIME -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
+clear
+lane
+echo -e "${g}      DONE DELETE IP VPS      $NC"
+lane
+echo -e "${y} USERNAME   :${NC}${yell} $name"
+echo -e "${y} IP ADDRESS :${NC}${yell} $ipdel"
+echo -e "${y} EXPIRED ON :${NC}${yell} $exp"
+lane
+Credit_nbstore
+fi
+}
+del

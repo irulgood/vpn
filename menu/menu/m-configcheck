@@ -1,0 +1,69 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+
+valid_uuid() {
+  echo "$1" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+}
+
+check_user() {
+  local proto="$1"
+  local db="$2"
+  read -rp " Input Username : " user
+  [ -z "$user" ] && { echo -e "${RED}Username kosong.${NC}"; return; }
+  if [ ! -f "$db" ]; then
+    echo -e "${RED}DB tidak ditemukan: $db${NC}"
+    return
+  fi
+  row="$(grep -w "$user" "$db" | tail -n1)"
+  if [ -z "$row" ]; then
+    echo -e "${RED}User tidak ditemukan di DB ${proto}.${NC}"
+    return
+  fi
+  uuid="$(echo "$row" | awk '{print $4}')"
+  exp="$(echo "$row" | awk '{print $3}')"
+  domain="$(cat /etc/xray/domain 2>/dev/null)"
+  [ -z "$domain" ] && domain="N/A"
+  echo -e "${GREEN}Protocol${NC} : $proto"
+  echo -e "${GREEN}User${NC}     : $user"
+  echo -e "${GREEN}Expiry${NC}   : $exp"
+  echo -e "${GREEN}UUID${NC}     : $uuid"
+  if valid_uuid "$uuid"; then
+    echo -e "${GREEN}UUID Check${NC}: PASS"
+  else
+    echo -e "${RED}UUID Check${NC}: FAIL"
+  fi
+  echo -e "${GREEN}SNI/Domain${NC}: $domain"
+  timeout 2 bash -c "echo >/dev/tcp/127.0.0.1/443" 2>/dev/null && echo -e "${GREEN}Port 443${NC}  : OPEN" || echo -e "${YELLOW}Port 443${NC}  : CHECK"
+  if command -v xray >/dev/null 2>&1; then
+    xray run -test -config /etc/xray/config.json >/dev/null 2>&1 && echo -e "${GREEN}Config Test${NC}: PASS" || echo -e "${RED}Config Test${NC}: FAIL"
+  else
+    echo -e "${YELLOW}Config Test${NC}: xray binary tidak ada"
+  fi
+}
+
+while true; do
+  clear
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m           CLIENT CONFIG CHECKER            \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Check VMESS Import Test                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Check VLESS Import Test                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}3.)${NC} Check TROJAN Import Test                \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-3,x] : " opt
+  case "$opt" in
+    1) check_user "VMESS" "/etc/vmess/.vmess.db"; read -n 1 -s -r -p " Press any key..." ;;
+    2) check_user "VLESS" "/etc/vless/.vless.db"; read -n 1 -s -r -p " Press any key..." ;;
+    3) check_user "TROJAN" "/etc/trojan/.trojan.db"; read -n 1 -s -r -p " Press any key..." ;;
+    x|X) exit 0 ;;
+  esac
+done
+

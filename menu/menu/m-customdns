@@ -1,0 +1,175 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+RESOLV="/etc/resolv.conf"
+BACKUP_DIR="/etc/ari-dns-backup"
+DNS_PROFILE="/etc/ari-dns.conf"
+DNS_APPLY_SCRIPT="/usr/local/sbin/ari-dns-apply"
+DNS_SERVICE="/etc/systemd/system/ari-dns-lock.service"
+mkdir -p "$BACKUP_DIR"
+
+backup_dns() {
+  local ts
+  ts="$(date +%Y%m%d-%H%M%S)"
+  cp -f "$RESOLV" "$BACKUP_DIR/resolv.conf.$ts.bak" 2>/dev/null && echo -e "${GREEN}Backup dibuat: resolv.conf.$ts.bak${NC}"
+}
+
+set_dns() {
+  local dns1 dns2
+  read -rp " Input DNS 1 (wajib) : " dns1
+  [ -z "$dns1" ] && echo -e "${RED}DNS 1 wajib diisi.${NC}" && return
+  read -rp " Input DNS 2 (opsional): " dns2
+  backup_dns
+  {
+    echo "nameserver $dns1"
+    [ -n "$dns2" ] && echo "nameserver $dns2"
+    echo "options timeout:2 attempts:2"
+  } > "$RESOLV"
+  {
+    echo "DNS1=$dns1"
+    echo "DNS2=$dns2"
+  } > "$DNS_PROFILE"
+  echo -e "${GREEN}DNS berhasil diupdate.${NC}"
+}
+
+set_cloudflare_dns() {
+  backup_dns
+  {
+    echo "nameserver 1.1.1.1"
+    echo "nameserver 1.0.0.1"
+    echo "options timeout:2 attempts:2"
+  } > "$RESOLV"
+  {
+    echo "DNS1=1.1.1.1"
+    echo "DNS2=1.0.0.1"
+  } > "$DNS_PROFILE"
+  echo -e "${GREEN}DNS Cloudflare aktif.${NC}"
+}
+
+set_google_dns() {
+  backup_dns
+  {
+    echo "nameserver 8.8.8.8"
+    echo "nameserver 8.8.4.4"
+    echo "options timeout:2 attempts:2"
+  } > "$RESOLV"
+  {
+    echo "DNS1=8.8.8.8"
+    echo "DNS2=8.8.4.4"
+  } > "$DNS_PROFILE"
+  echo -e "${GREEN}DNS Google aktif.${NC}"
+}
+
+test_resolve() {
+  local target
+  read -rp " Domain test (default: google.com): " target
+  [ -z "$target" ] && target="google.com"
+  if command -v getent >/dev/null 2>&1; then
+    echo -e "${YELLOW}Resolving ${target}...${NC}"
+    getent hosts "$target" || true
+  fi
+  if command -v ping >/dev/null 2>&1; then
+    echo -e "${YELLOW}Ping ${target}...${NC}"
+    ping -c 2 -W 2 "$target" || true
+  fi
+}
+
+rollback_dns() {
+  last_bak="$(ls -1t "$BACKUP_DIR"/resolv.conf.*.bak 2>/dev/null | head -n1)"
+  if [ -z "$last_bak" ]; then
+    echo -e "${RED}Backup DNS tidak ditemukan.${NC}"
+    return
+  fi
+  cp -f "$last_bak" "$RESOLV"
+  echo -e "${GREEN}Rollback sukses dari: $(basename "$last_bak")${NC}"
+}
+
+install_dns_lock_service() {
+  cat > "$DNS_APPLY_SCRIPT" <<'EOF'
+#!/bin/bash
+PROFILE="/etc/ari-dns.conf"
+RESOLV="/etc/resolv.conf"
+[ -f "$PROFILE" ] || exit 0
+source "$PROFILE"
+[ -z "$DNS1" ] && exit 0
+{
+  echo "nameserver $DNS1"
+  [ -n "$DNS2" ] && echo "nameserver $DNS2"
+  echo "options timeout:2 attempts:2"
+} > "$RESOLV"
+EOF
+  chmod +x "$DNS_APPLY_SCRIPT"
+
+  cat > "$DNS_SERVICE" <<'EOF'
+[Unit]
+Description=ARI DNS lock apply on boot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ari-dns-apply
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload
+}
+
+enable_dns_lock() {
+  install_dns_lock_service
+  systemctl enable ari-dns-lock.service >/dev/null 2>&1
+  systemctl start ari-dns-lock.service >/dev/null 2>&1
+  echo -e "${GREEN}DNS lock-protect AKTIF (persist after reboot).${NC}"
+}
+
+disable_dns_lock() {
+  systemctl disable --now ari-dns-lock.service >/dev/null 2>&1 || true
+  rm -f "$DNS_SERVICE" "$DNS_APPLY_SCRIPT"
+  systemctl daemon-reload >/dev/null 2>&1 || true
+  echo -e "${YELLOW}DNS lock-protect NONAKTIF.${NC}"
+}
+
+while true; do
+  current_dns="$(awk '/^nameserver/{print $2}' "$RESOLV" 2>/dev/null | paste -sd ', ' -)"
+  [ -z "$current_dns" ] && current_dns="N/A"
+  if systemctl is-enabled ari-dns-lock.service >/dev/null 2>&1; then
+    lock_stat="${GREEN}ON${NC}"
+  else
+    lock_stat="${RED}OFF${NC}"
+  fi
+  clear
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m             CUSTOM DNS MANAGER             \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}ACTIVE DNS${NC} : $current_dns"
+  echo -e "\033[0;34m│  ${GREEN}DNS LOCK${NC}   : $lock_stat"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Set Custom DNS                          \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Set Cloudflare DNS (1.1.1.1/1.0.0.1)    \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}3.)${NC} Set Google DNS (8.8.8.8/8.8.4.4)        \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}4.)${NC} Test Resolve                            \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}5.)${NC} Rollback Last DNS Backup                \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}6.)${NC} Enable DNS Lock-Protect                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}7.)${NC} Disable DNS Lock-Protect                \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-7,x] : " opt
+  case "$opt" in
+    1) set_dns; read -n 1 -s -r -p " Press any key..." ;;
+    2) set_cloudflare_dns; read -n 1 -s -r -p " Press any key..." ;;
+    3) set_google_dns; read -n 1 -s -r -p " Press any key..." ;;
+    4) test_resolve; read -n 1 -s -r -p " Press any key..." ;;
+    5) rollback_dns; read -n 1 -s -r -p " Press any key..." ;;
+    6) enable_dns_lock; read -n 1 -s -r -p " Press any key..." ;;
+    7) disable_dns_lock; read -n 1 -s -r -p " Press any key..." ;;
+    x|X) exit 0 ;;
+  esac
+done
+

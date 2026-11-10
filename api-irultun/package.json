@@ -1,0 +1,12 @@
+{
+  "name": "irultun-vps-api",
+  "version": "1.0.0",
+  "description": "IRULTUN REST API Bridge for Multi-Server VPS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

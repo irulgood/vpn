@@ -1,0 +1,80 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+SSHD_CONFIG="/etc/ssh/sshd_config"
+BACKUP_DIR="/etc/ari-ssh-backup"
+mkdir -p "$BACKUP_DIR"
+
+current_ports() {
+  awk '/^[[:space:]]*Port[[:space:]]+[0-9]+/{print $2}' "$SSHD_CONFIG" | paste -sd ', ' -
+}
+
+backup_config() {
+  ts="$(date +%Y%m%d-%H%M%S)"
+  cp -f "$SSHD_CONFIG" "$BACKUP_DIR/sshd_config.$ts.bak"
+}
+
+apply_ports() {
+  # Usage: apply_ports "22 9696"
+  ports="$1"
+  backup_config
+  sed -i '/^[[:space:]]*Port[[:space:]]\+[0-9]\+/d' "$SSHD_CONFIG"
+  for p in $ports; do
+    echo "Port $p" >> "$SSHD_CONFIG"
+  done
+
+  if sshd -t -f "$SSHD_CONFIG" 2>/dev/null; then
+    systemctl restart ssh >/dev/null 2>&1 || service ssh restart >/dev/null 2>&1
+    echo -e "${GREEN}Port SSH berhasil diupdate: $ports${NC}"
+    echo -e "${YELLOW}Cek koneksi tetap aman sebelum logout.${NC}"
+  else
+    echo -e "${RED}Config invalid, rollback otomatis.${NC}"
+    last_bak="$(ls -1t "$BACKUP_DIR"/sshd_config.*.bak 2>/dev/null | head -n1)"
+    [ -n "$last_bak" ] && cp -f "$last_bak" "$SSHD_CONFIG"
+    sshd -t -f "$SSHD_CONFIG" 2>/dev/null && (systemctl restart ssh >/dev/null 2>&1 || service ssh restart >/dev/null 2>&1)
+  fi
+}
+
+set_custom() {
+  read -rp " Input custom port (contoh: 2222): " cport
+  if ! echo "$cport" | grep -Eq '^[0-9]+$'; then
+    echo -e "${RED}Port harus angka.${NC}"
+    return
+  fi
+  if [ "$cport" -lt 1 ] || [ "$cport" -gt 65535 ]; then
+    echo -e "${RED}Range port harus 1-65535.${NC}"
+    return
+  fi
+  apply_ports "22 $cport"
+}
+
+while true; do
+  cur="$(current_ports)"
+  [ -z "$cur" ] && cur="default(22)"
+  clear
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m           SSH PORT PROFILE MANAGER         \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}ACTIVE PORT${NC} : $cur"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Profile Default (22)                    \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Profile 22 + 9696                       \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}3.)${NC} Profile 22 + Custom Port                \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}4.)${NC} Show Listening SSH Ports                \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-4,x] : " opt
+  case "$opt" in
+    1) apply_ports "22"; read -n 1 -s -r -p " Press any key..." ;;
+    2) apply_ports "22 9696"; read -n 1 -s -r -p " Press any key..." ;;
+    3) set_custom; read -n 1 -s -r -p " Press any key..." ;;
+    4) ss -tulpen | awk '/:22 |:9696 |sshd/'; read -n 1 -s -r -p " Press any key..." ;;
+    x|X) exit 0 ;;
+  esac
+done
+

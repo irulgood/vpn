@@ -1,0 +1,111 @@
+#!/bin/bash
+# =========================================================
+# IRULTUN VPS REST API BRIDGE MANAGER
+# Menampilkan status API, port, dan Auth Key untuk Botweb
+# =========================================================
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+NC='\033[0m'
+
+function get_api_status() {
+    if systemctl is-active --quiet irultun-api 2>/dev/null; then
+        echo -e "${GREEN}[ RUNNING / ONLINE ]${NC}"
+    else
+        echo -e "${RED}[ STOPPED / OFFLINE ]${NC}"
+    fi
+}
+
+function get_auth_key() {
+    local key=$(cat /etc/irultun_auth 2>/dev/null)
+    [ -z "$key" ] && key=$(grep -oP '(?<=export AUTH_KEY=")[^"]+' /etc/profile 2>/dev/null)
+    [ -z "$key" ] && key="irultunIRULTUN2026"
+    echo "$key"
+}
+
+function get_domain() {
+    local d=$(cat /etc/xray/domain 2>/dev/null || cat /root/domain 2>/dev/null)
+    [ -z "$d" ] && d=$(curl -sS ipv4.icanhazip.com 2>/dev/null || hostname -I | awk '{print $1}')
+    echo "$d"
+}
+
+function show_api_info() {
+    clear
+    local domain=$(get_domain)
+    local auth_key=$(get_auth_key)
+
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${WHITE}           IRULTUN VPS REST API BRIDGE INFO         ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " Status API Server : $(get_api_status)"
+    echo -e " Domain Server     : ${WHITE}${domain}${NC}"
+    echo -e " Port Internal     : ${WHITE}5889 (Express.js)${NC}"
+    echo -e " Endpoint Public   : ${WHITE}http://${domain}/vps/...${NC}"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+    echo -e " 🔑 ${YELLOW}AUTH TOKEN VPS (Gunakan saat input server di Botweb):${NC}"
+    echo -e " ${GREEN}${auth_key}${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+}
+
+function change_auth_key() {
+    clear
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${WHITE}                 UBAH AUTH TOKEN VPS                ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " Token saat ini: ${YELLOW}$(get_auth_key)${NC}"
+    echo ""
+    echo -e " Masukkan Auth Token baru (atau biarkan kosong untuk acak 32 char):"
+    read -rp " Token Baru: " new_key
+
+    if [ -z "$new_key" ]; then
+        new_key="irultun$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 28)"
+    fi
+
+    echo "$new_key" > /etc/irultun_auth
+    chmod 600 /etc/irultun_auth 2>/dev/null
+
+    # Perbarui environment service jika ada
+    if [ -f /etc/systemd/system/irultun-api.service ]; then
+        sed -i "s/Environment=AUTH_KEY=.*/Environment=AUTH_KEY=${new_key}/" /etc/systemd/system/irultun-api.service
+        systemctl daemon-reload 2>/dev/null || true
+        systemctl restart irultun-api 2>/dev/null || true
+    fi
+
+    echo -e " ${GREEN}✅ Auth Token berhasil diperbarui!${NC}"
+    echo -e " Token Baru: ${WHITE}${new_key}${NC}"
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+}
+
+function test_api_locally() {
+    clear
+    echo -e " [INFO] Mengetes respon REST API di port 5889..."
+    local res=$(curl -sS --max-time 3 http://127.0.0.1:5889/health 2>/dev/null)
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " Respon: ${WHITE}${res:-'(Tidak ada respon, service belum berjalan)'}${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+}
+
+while true; do
+    show_api_info
+    echo -e " [1] Ubah / Reset Auth Token VPS"
+    echo -e " [2] Restart Service IRULTUN API"
+    echo -e " [3] Tes Respon API (Health Check)"
+    echo -e " [0] Kembali ke Menu Utama"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    read -rp " Pilih Menu [0-3]: " opt
+    case "$opt" in
+        1) change_auth_key ;;
+        2) systemctl restart irultun-api 2>/dev/null; echo -e "${GREEN}Service direstart!${NC}"; sleep 1 ;;
+        3) test_api_locally ;;
+        0|x|X) menu; break ;;
+        *) echo -e " Pilihan tidak valid!"; sleep 1 ;;
+    esac
+done

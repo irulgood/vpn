@@ -1,0 +1,110 @@
+#!/bin/bash
+# =======================================================
+# Auto Clean Expired Users (Presisi Jam & Menit)
+# IRULTUN Precision Expiry Daemon & Cleaner
+# =======================================================
+
+# 1. Panggil auto-cleanup API Express jika service irultun-api aktif
+if systemctl is-active --quiet irultun-api; then
+    curl -s http://127.0.0.1:5889/vps/xp >/dev/null 2>&1
+fi
+
+now_sec=$(date +%s)
+xray_modified=0
+
+# 2. Cleanup Database Xray (VMess, VLESS, Trojan)
+clean_xray_proto() {
+    local db_file="$1"
+    local pfx="$2"
+    local proto="$3"
+    
+    [ ! -f "$db_file" ] && return
+    
+    local tmp_file="/tmp/clean_${proto}_$$.db"
+    rm -f "$tmp_file"
+    touch "$tmp_file"
+    
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] && continue
+        # Format: pfx username YYYY-MM-DD [HH:MM:SS] uuid ...
+        read -r line_pfx user f3 f4 rest <<< "$line"
+        
+        if [ "$line_pfx" = "$pfx" ] && [ -n "$user" ]; then
+            local exp_str=""
+            if [[ "$f4" =~ ^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$ ]]; then
+                exp_str="$f3 $f4"
+            else
+                exp_str="$f3 23:59:59"
+            fi
+            
+            local exp_sec=$(date -d "$exp_str" +%s 2>/dev/null || echo 0)
+            if [ "$exp_sec" -gt 0 ] && [ "$now_sec" -ge "$exp_sec" ]; then
+                # Akun kedaluwarsa
+                xray_modified=1
+                rm -f "/etc/kyt/limit/${proto}/ip/${user}" 2>/dev/null
+                continue
+            fi
+        fi
+        echo "$line" >> "$tmp_file"
+    done < "$db_file"
+    
+    mv -f "$tmp_file" "$db_file"
+}
+
+clean_xray_proto "/etc/vmess/.vmess.db" "###" "vmess"
+clean_xray_proto "/etc/vless/.vless.db" "#&" "vless"
+clean_xray_proto "/etc/trojan/.trojan.db" "#!" "trojan"
+
+# Jika ada akun Xray yang dibersihkan, trigger sinkronisasi JSON
+if [ "$xray_modified" -eq 1 ]; then
+    if systemctl is-active --quiet irultun-api; then
+        node -e 'require("/usr/local/irultun-api/server.js")' 2>/dev/null || true
+    fi
+fi
+
+# 3. Cleanup SSH User dari /etc/ssh/.ssh.db dan Linux System
+if [ -f "/etc/ssh/.ssh.db" ]; then
+    tmp_ssh="/tmp/clean_ssh_$$.db"
+    rm -f "$tmp_ssh"
+    touch "$tmp_ssh"
+    
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] && continue
+        read -r pfx user pass q lim f6 f7 rest <<< "$line"
+        
+        if [ "$pfx" = "#ssh#" ] && [ -n "$user" ]; then
+            exp_str=""
+            if [[ "$f7" =~ ^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$ ]]; then
+                exp_str="$f6 $f7"
+            elif [ -n "$f6" ]; then
+                exp_str="$f6 23:59:59"
+            fi
+            
+            exp_sec=$(date -d "$exp_str" +%s 2>/dev/null || echo 0)
+            if [ "$exp_sec" -gt 0 ] && [ "$now_sec" -ge "$exp_sec" ]; then
+                # Expired: tendang proses, kunci akun & hapus user
+                pkill -u "$user" 2>/dev/null || true
+                userdel -f "$user" 2>/dev/null || true
+                rm -f "/etc/kyt/limit/ssh/ip/${user}" 2>/dev/null
+                continue
+            fi
+        fi
+        echo "$line" >> "$tmp_ssh"
+    done < "/etc/ssh/.ssh.db"
+    
+    mv -f "$tmp_ssh" "/etc/ssh/.ssh.db"
+fi
+
+# 4. Fallback Pembersihan Akun Linux bawaan via /etc/shadow
+cat /etc/shadow | cut -d: -f1,8 | sed /:$/d > /tmp/expirelist.txt
+while IFS=: read -r username userexp; do
+    [ -z "$username" ] || [ -z "$userexp" ] && continue
+    userexp_sec=$(( userexp * 86400 ))
+    if [ "$userexp_sec" -gt 0 ] && [ "$now_sec" -ge "$userexp_sec" ]; then
+        pkill -u "$username" 2>/dev/null || true
+        userdel -f "$username" 2>/dev/null || true
+    fi
+done < /tmp/expirelist.txt
+rm -f /tmp/expirelist.txt
+
+exit 0

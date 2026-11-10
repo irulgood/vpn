@@ -1,0 +1,110 @@
+#!/bin/bash
+# Color
+RED='\033[0;31m'
+NC='\033[0m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+LIGHT='\033[0;37m'
+
+clear
+echo " "
+echo " "
+
+# Array untuk menyimpan log files yang akan diperiksa
+LOG_FILES=()
+
+if [ -e "/var/log/auth.log" ]; then
+    LOG_FILES+=("/var/log/auth.log")
+fi
+
+if [ -e "/var/log/secure" ]; then
+    LOG_FILES+=("/var/log/secure")
+fi
+
+if [ -e "/var/log/syslog" ]; then
+    LOG_FILES+=("/var/log/syslog")
+fi
+
+# Gabungkan semua log files yang relevan
+TMP_LOG="/tmp/combined_log.txt"
+> "$TMP_LOG" # Kosongkan file temporary
+
+for log_file in "${LOG_FILES[@]}"; do
+    if [ -e "$log_file" ]; then
+        cat "$log_file" >> "$TMP_LOG"
+    fi
+done
+
+# Proses data Dropbear
+data=( `ps aux | grep -i dropbear | awk '{print $2}'`);
+echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
+echo "    ID  |  Username  |  IP Address";
+echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+
+# Cari login Dropbear yang berhasil dari semua log files
+cat $TMP_LOG | grep -i dropbear | grep -i "Password auth succeeded" > /tmp/login-db.txt;
+
+for PID in "${data[@]}"
+do
+    cat /tmp/login-db.txt | grep "dropbear\[$PID\]" > /tmp/login-db-pid.txt;
+    NUM=`cat /tmp/login-db-pid.txt | wc -l`;
+    if [ $NUM -eq 1 ]; then
+        USER=`cat /tmp/login-db-pid.txt | awk '{print $10}'`;
+        IP=`cat /tmp/login-db-pid.txt | awk '{print $12}'`;
+        echo "$PID - $USER - $IP";
+    fi
+done
+echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+
+echo " "
+echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
+echo "    ID  |  Username  |  IP Address";
+echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+
+# Cari login SSH yang berhasil dari semua log files
+cat $TMP_LOG | grep -i sshd | grep -i "Accepted password for" > /tmp/login-db.txt
+data=( `ps aux | grep "\[priv\]" | sort -k 72 | awk '{print $2}'`);
+
+for PID in "${data[@]}"
+do
+    cat /tmp/login-db.txt | grep "sshd\[$PID\]" > /tmp/login-db-pid.txt;
+    NUM=`cat /tmp/login-db-pid.txt | wc -l`;
+    if [ $NUM -eq 1 ]; then
+        USER=`cat /tmp/login-db-pid.txt | awk '{print $9}'`;
+        IP=`cat /tmp/login-db-pid.txt | awk '{print $11}'`;
+        echo "$PID - $USER - $IP";
+    fi
+done
+echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+
+# VPN TCP
+if [ -f "/etc/openvpn/server/openvpn-tcp.log" ]; then
+    echo ""
+    echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
+    echo "    Username  |  IP Address  |  Connected";
+    echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+    cat /etc/openvpn/server/openvpn-tcp.log | grep -w "^CLIENT_LIST" | cut -d ',' -f 2,3,8 | sed -e 's/,/      /g' > /tmp/vpn-login-tcp.txt
+    cat /tmp/vpn-login-tcp.txt
+fi
+echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+
+# VPN UDP
+if [ -f "/etc/openvpn/server/openvpn-udp.log" ]; then
+    echo " "
+    echo -e "\033[1;36m┌──────────────────────────────────────────┐\033[0m"
+    echo "    Username  |  IP Address  |  Connected";
+    echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+    cat /etc/openvpn/server/openvpn-udp.log | grep -w "^CLIENT_LIST" | cut -d ',' -f 2,3,8 | sed -e 's/,/      /g' > /tmp/vpn-login-udp.txt
+    cat /tmp/vpn-login-udp.txt
+fi
+echo -e "\033[1;36m└──────────────────────────────────────────┘\033[0m"
+
+# Bersihkan file temporary
+rm -f /tmp/login-db.txt /tmp/login-db-pid.txt /tmp/vpn-login-tcp.txt /tmp/vpn-login-udp.txt "$TMP_LOG"
+
+echo "";
+read -n 1 -s -r -p "Press any key to back on menu"
+m-sshws

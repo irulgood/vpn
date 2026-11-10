@@ -1,0 +1,185 @@
+#!/bin/bash
+# My Telegram : https://t.me/frdnsyah_05
+# ==========================================
+# Color
+GREEN='\e[36m'
+RED='\033[0;31m'
+BGBLUE='\e[1;44m'
+ORANGE='\033[0;33m'
+BLUE='\033[1;36m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+BG='\E[44;1;39m'
+NC='\033[0;37m'
+WHITE='\033[0;37m'
+r="\033[1;31m"  #REDTERANG
+# ==========================================
+# Getting
+CHATID=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 3)
+KEY=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 2)
+export TIME="10"
+export URL="https://api.telegram.org/bot$KEY/sendMessage"
+ISP=$(curl -s ipinfo.io/org | cut -d " " -f 2-10 )
+CITY=$(curl -s ipinfo.io/city )
+domain=$(cat /etc/xray/domain 2>/dev/null || echo "127.0.0.1")
+SLDNS_STATUS=$(cat /etc/slowdns/status 2>/dev/null || echo "OFF")
+SLDNS_NS=$(cat /etc/xray/dns 2>/dev/null || cat /etc/slowdns/nsdomain 2>/dev/null || echo "-")
+SLDNS_PUB=$(cat /etc/slowdns/server.pub 2>/dev/null || echo "-")
+clear
+IP=$(curl -sS ipv4.icanhazip.com)
+Login=Trial-`</dev/urandom tr -dc X-Z0-9 | head -c4`
+hari="1"
+Pass=1
+clear
+tgl=$(date -d "$masaaktif days" +"%d")
+bln=$(date -d "$masaaktif days" +"%b")
+thn=$(date -d "$masaaktif days" +"%Y")
+expe=$(date -d "$masaaktif days" +"%Y-%m-%d %H:%M:%S")
+tgl2=$(date +"%d")
+bln2=$(date +"%b")
+thn2=$(date +"%Y")
+tnggl="$tgl2 $bln2, $thn2"
+useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -m $Login
+exp="$expe"
+hariini=`date -d "0 days" +"%Y-%m-%d"`
+expi=`date -d "$masaaktif days" +"%Y-%m-%d"`
+echo -e "$Pass\n$Pass\n"|passwd $Login &> /dev/null
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[1;96m           Set Expired Account           \E[0m"
+echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+read -p " Menit : " pup
+CHATID="$CHATID"
+KEY="$KEY"
+TIME="$TIME"
+URL="$URL"
+TEXT="
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<b>    Succes Trial SSH Ovpn Account</b>
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<code>Username    :</code> <code>$Login</code>
+<code>Password    :</code> <code>$Pass</code>
+<code>Host        :</code> <code>$domain</code>
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<b>                   INFORMASI PORT</b>
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<code>OpenSSH     :</code> 443, 80, 22
+<code>Dropbear    :</code> 443, 109
+<code>SSH WS      :</code> 80, 8080, 8081-9999
+<code>SSH UDP     :</code> 1-65535
+<code>SSH SSL WS  :</code> 443
+<code>SSL/TLS     :</code> 400-900
+<code>OVPN WS SSL :</code> 443
+<code>OVPN SSL    :</code> 443
+<code>OVPN TCP    :</code> 443, 1194
+<code>OVPN UDP    :</code> 2200
+<code>BadVPN UDP  :</code> 7100, 7300, 7300
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<b>SSH UDP :</b>
+<code>$domain:1-65535@$Login:$Pass</code>
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<b>HTTP CUSTOM :</b>
+Port 80     : <code>$domain:80@$Login:$Pass<code>
+Port 443    : <code>$domain:443@$Login:$Pass<code>
+Udp Custom  : <code>$domain:1-65535@$Login:$Pass<code>
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<b>Payload WSS :</b>
+<code>GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]</code>
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<b>OVPN Download:</b>
+https://$domain:81/
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<b>Save Link Account:</b>
+https://$domain:81/ssh-$Login.txt
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+<code>Berakhir Pada:</code> <b>$pup Menit</b>
+◇━━━━━━━━━━━━━━━━━━━━━━━◇
+"
+
+curl -s --max-time $TIME -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
+echo ""
+mkdir -p /etc/ssh
+
+if [[ ${c} != "0" ]]; then
+  echo "${d}" >/etc/ssh/${Login}
+fi
+DATADB=$(cat /etc/ssh/.ssh.db | grep "^#ssh#" | grep -w "${Login}" | awk '{print $2}')
+if [[ "${DATADB}" != '' ]]; then
+  sed -i "/\b${Login}\b/d" /etc/ssh/.ssh.db
+fi
+echo "#ssh# ${Login} ${Pass} 0 2 ${expe}" >>/etc/ssh/.ssh.db
+echo ""
+cat > /var/www/html/ssh-$Login.txt <<-END
+◇━━━━━━━━━━━━━━━━━◇
+Format SSH OVPN Account
+◇━━━━━━━━━━━━━━━━━◇
+Username         : $Login
+Password         : $Pass
+Berakhir Pada  : $pup Menit
+◇━━━━━━━━━━━━━━━━━◇
+IP               : $IP
+Host             : $domain
+Port OpenSSH     : 443, 80, 22
+Port Dropbear    : 443, 109
+Port SSH UDP     : 1-65535
+Port SSH WS      : 80, 8080, 8081-9999
+Port SSH SSL WS  : 443
+Port SSL/TLS     : 400-900
+Port OVPN WS SSL : 443
+Port OVPN SSL    : 443
+Port OVPN TCP    : 1194
+Port OVPN UDP    : 2200
+BadVPN UDP       : 7100, 7300, 7300
+Port 80          : $domain:80@$Login:$Pass
+Port 443         : $domain:443@$Login:$Pass
+Udp Custom       : $domain:1-65535@$Login:$Pass
+◇━━━━━━━━━━━━━━━━━◇
+Payload WSS: GET wss://BUG.COM/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf] 
+◇━━━━━━━━━━━━━━━━━◇
+SlowDNS Status: $([ "$SLDNS_STATUS" == "ON" ] && echo "AKTIF (ON)" || echo "NONAKTIF (OFF)")
+Nameserver (NS): ${SLDNS_NS:-"-"}
+Public Key (PUB): ${SLDNS_PUB:-"-"}
+SlowDNS Port  : 53, 5300
+◇━━━━━━━━━━━━━━━━━◇
+OVPN Download : https://$domain:81/
+◇━━━━━━━━━━━━━━━━━◇
+END
+echo userdel -f "$Login" | at now + $pup minutes
+clear
+echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━◇$NC"
+echo -e "  Trial SSH & OpenVPN"
+echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━◇$NC"
+echo -e " Username         : $Login"
+echo -e " Password         : $Pass"
+echo -e " IP/Host          : $IP"
+echo -e " Domain SSH       : $domain"
+echo -e " OpenSSH          : 22"
+echo -e " Dropbear         : 80, 8080"
+echo -e " Port SSH UDP     : 1-65535"
+echo -e " SSL/TLS          : 400-900"
+echo -e " SSH Ws Non SSL   : 80, 8080, 8081-9999"
+echo -e " SSH Ws SSL       : 443"
+echo -e " OVPN Ws Non SSL  : 80"
+echo -e " OVPN Ws SSL      : 443"
+echo -e " BadVPN UDPGW     : 7100,7200,7300"
+echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━━━━━━◇$NC"
+echo -e "Port 80          : $domain:80@$Login:$Pass \033[0m"
+echo -e "Port 443         : $domain:443@$Login:$Pass \033[0m"
+echo -e "Udp Custom       : $domain:1-65535@$Login:$Pass\033[0m"
+echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━◇$NC"
+if [ "$SLDNS_STATUS" == "ON" ]; then
+    echo -e " SlowDNS Status   : \033[0;32mAKTIF (ON)\033[0m"
+    echo -e " NS (Nameserver)  : $SLDNS_NS"
+    echo -e " Public Key (PUB) : $SLDNS_PUB"
+    echo -e " SlowDNS Port     : 53, 5300"
+    echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━◇$NC"
+fi
+echo -e " OVPN Download : https://$domain:81/"
+echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━◇$NC"
+echo -e "Save Link Account: https://$domain:81/ssh-$Login.txt"
+echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━◇$NC"
+#echo -e "Aktif Selama   : $masaaktif Hari"
+#echo -e "Dibuat Pada    : $tnggl"
+echo -e "Berakhir Pada  : $pup Menit"
+echo -e "$BLUE◇━━━━━━━━━━━━━━━━━━━━◇$NC"
+read -n 1 -s -r -p "Press any key to back on menu"
+menu

@@ -1,0 +1,217 @@
+#!/bin/bash
+Green="\e[92;1m"
+RED="\033[31m"
+YELLOW="\033[33m"
+BLUE="\033[36m"
+FONT="\033[0m"
+GREENBG="\033[42;37m"
+REDBG="\033[41;37m"
+OK="${Green}--->${FONT}"
+ERROR="${RED}[ERROR]${FONT}"
+GRAY="\e[1;30m"
+NC='\e[0m'
+red='\e[1;31m'
+green='\e[0;36m'
+DF='\e[39m'
+Bold='\e[1m'
+Blink='\e[5m'
+yell='\e[33m'
+red='\e[31m'
+green='\e[36m'
+blue='\e[34m'
+PURPLE='\e[35m'
+cyan='\e[36m'
+Lred='\e[91m'
+Lgreen='\e[92m'
+Lyellow='\e[93m'
+NC='\e[0m'
+GREEN='\033[0;36m'
+ORANGE='\033[0;33m'
+LIGHT='\033[0;37m'
+grenbo="\e[92;1m"
+red() { echo -e "\\033[32;1m${*}\\033[0m"; }
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+
+create_custom_uuid_vless() {
+    read -rp "Input custom UUID : " custom_uuid
+    if [ -z "$custom_uuid" ]; then
+        echo -e "${RED}UUID tidak boleh kosong.${NC}"
+        sleep 1
+        m-vless
+        return
+    fi
+    CUSTOM_UUID="$custom_uuid" addvless
+}
+
+modify_uuid_vless() {
+    local user exp old_uuid quota iplimit new_uuid
+    read -rp "Input Username : " user
+    [ -z "$user" ] && m-vless && return
+    read -rp "Input UUID baru : " new_uuid
+    [ -z "$new_uuid" ] && m-vless && return
+    exp=$(awk -v u="$user" '$1=="###" && $2==u {print $3}' /etc/vless/.vless.db)
+    old_uuid=$(awk -v u="$user" '$1=="###" && $2==u {print $4}' /etc/vless/.vless.db)
+    quota=$(awk -v u="$user" '$1=="###" && $2==u {print $5}' /etc/vless/.vless.db)
+    iplimit=$(awk -v u="$user" '$1=="###" && $2==u {print $6}' /etc/vless/.vless.db)
+    if [ -z "$exp" ] || [ -z "$old_uuid" ]; then
+        echo -e "${RED}User tidak ditemukan di database VLESS.${NC}"
+        sleep 1
+        m-vless
+        return
+    fi
+    sed -i "/^#& $user $exp/,/^},{/d" /etc/xray/config.json
+    sed -i '/#vless$/a\#& '"$user $exp"'\
+},{"id": "'""$new_uuid""'","email": "'""$user""'"' /etc/xray/config.json
+    sed -i '/#vlessgrpc$/a\#& '"$user $exp"'\
+},{"id": "'""$new_uuid""'","email": "'""$user""'"' /etc/xray/config.json
+    sed -i -E "s|^### $user $exp .*|### $user $exp $new_uuid ${quota:-0} ${iplimit:-0}|" /etc/vless/.vless.db
+    systemctl restart xray >/dev/null 2>&1
+    echo -e "${GREEN}UUID VLESS untuk ${user} berhasil diubah.${NC}"
+    sleep 1
+    m-vless
+}
+
+lock_vless() {
+    local user exp
+    read -rp "Input Username : " user
+    [ -z "$user" ] && m-vless && return
+    exp=$(awk -v u="$user" '$1=="###" && $2==u {print $3}' /etc/vless/.vless.db)
+    if [ -z "$exp" ]; then
+        echo -e "${RED}User tidak ditemukan.${NC}"
+        sleep 1
+        m-vless
+        return
+    fi
+    sed -i "/^#& $user $exp/,/^},{/d" /etc/xray/config.json
+    systemctl restart xray >/dev/null 2>&1
+    echo -e "${GREEN}User VLESS ${user} berhasil di-lock.${NC}"
+    sleep 1
+    m-vless
+}
+
+unlock_vless() {
+    local user exp uuid
+    read -rp "Input Username : " user
+    [ -z "$user" ] && m-vless && return
+    exp=$(awk -v u="$user" '$1=="###" && $2==u {print $3}' /etc/vless/.vless.db)
+    uuid=$(awk -v u="$user" '$1=="###" && $2==u {print $4}' /etc/vless/.vless.db)
+    if [ -z "$exp" ] || [ -z "$uuid" ]; then
+        echo -e "${RED}User/UUID tidak ditemukan pada DB VLESS.${NC}"
+        sleep 1
+        m-vless
+        return
+    fi
+    sed -i '/#vless$/a\#& '"$user $exp"'\
+},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/config.json
+    sed -i '/#vlessgrpc$/a\#& '"$user $exp"'\
+},{"id": "'""$uuid""'","email": "'""$user""'"' /etc/xray/config.json
+    systemctl restart xray >/dev/null 2>&1
+    echo -e "${GREEN}User VLESS ${user} berhasil di-unlock.${NC}"
+    sleep 1
+    m-vless
+}
+
+check_config_vless() {
+    echo -e ""
+    if xray run -test -config /etc/xray/config.json >/dev/null 2>&1 || xray -test -config /etc/xray/config.json >/dev/null 2>&1; then
+        echo -e "${GREEN}Config Xray valid.${NC}"
+    else
+        echo -e "${RED}Config Xray terdeteksi error.${NC}"
+    fi
+    read -n 1 -s -r -p "Press any key to back on menu"
+    m-vless
+}
+# Getting
+ipsaya=$(wget -qO- ipinfo.io/ip)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+clear
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│ \033[41;97m                  VLESS MENU                \033[0;34m \033[0;34m│${NC}"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│  ${GREEN}1.)${NC} Create                                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}2.)${NC} Create [Custom UUID]                    \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}3.)${NC} Trial                                   \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}4.)${NC} Delete                                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}5.)${NC} Renew/Extend                            \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}6.)${NC} Modify UUID                             \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}7.)${NC} Check Users Login                       \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}8.)${NC} List Users                              \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ──────────────────────────────────────────  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}9.)${NC} Lock                                    \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}10.)${NC} Unlock                                 \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ──────────────────────────────────────────  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}11.)${NC} Check Config                           \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}12.)${NC} Recovery                               \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}13.)${NC} Edit Limit IP                          \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}14.)${NC} Edit Limit IP All                      \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}15.)${NC} Edit Limit Bandwidth                   \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}16.)${NC} Edit Limit All Bandwidth               \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}17.)${NC} Back to Menu                           \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}x.)${NC} Exit                                    \033[0;34m│${NC}"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+#echo -e "Press [x] Back | UI: ${ORANGE}${UI_MODE}${NC} | Last update: $(date +%F)"
+read -p " Select From Options [1-17,x] : " menu
+case $menu in
+1)  clear ;
+    addvless
+    ;;
+2) clear ;
+    create_custom_uuid_vless
+    ;;
+3) clear ;
+    trialvless
+    ;;
+4) clear ;
+    delvless
+    ;;
+5) clear ;
+    renewvless
+    ;;
+6) clear ;
+    modify_uuid_vless
+    ;;
+7) clear ;
+    cekvless
+    ;;
+8) clear ;
+    user-vless
+    ;;
+9) clear ;
+    lock_vless
+    ;;
+10) clear ;
+    unlock_vless
+    ;;
+11) clear ;
+    check_config_vless
+    ;;
+12) clear ;
+    recovery
+    ;;
+13) clear ;
+    edit-limip vless single
+    m-vless
+    ;;
+14) clear ;
+    edit-limip vless all
+    m-vless
+    ;;
+15) clear ;
+    limitspeed
+    ;;
+16) clear ;
+    wondershaper
+    ;;
+17|0|00) clear ;
+    menu
+    ;;
+x|X) clear ;
+    exit 0
+    ;;
+*) clear ;
+    menu
+    ;;
+esac

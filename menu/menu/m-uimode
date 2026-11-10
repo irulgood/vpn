@@ -1,0 +1,40 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+MODE_FILE="/etc/ari-ui-mode"
+
+get_mode() {
+  if [ -f "$MODE_FILE" ]; then
+    cat "$MODE_FILE"
+  else
+    echo "full"
+  fi
+}
+
+set_mode() {
+  echo "$1" > "$MODE_FILE"
+  chmod 644 "$MODE_FILE"
+}
+
+while true; do
+  clear
+  mode="$(get_mode)"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m              UI MODE MANAGER               \033[0;34m \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}MODE${NC} : ${YELLOW}${mode}                     ${NC}"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Set FULL mode                           \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Set COMPACT mode                        ${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "Press [x] Back | Last update: $(date +%F)"
+  read -rp " Select From Options [1-2,x] : " opt
+  case "$opt" in
+    1) set_mode "full" ;;
+    2) set_mode "compact" ;;
+    x|X) exit 0 ;;
+  esac
+done
+

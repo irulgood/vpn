@@ -1,0 +1,208 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+R2_FILE="/etc/ari-r2.conf"
+RCLONE_REMOTE="ari-r2"
+BACKUP_DIR="/root/backup/auto"
+REMOTE_PATH="ari-tunneling"
+
+ensure_r2_file() {
+  [ -f "$R2_FILE" ] && return 0
+  cat >"$R2_FILE" <<'EOF'
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET=
+R2_ENDPOINT=
+R2_PATH=ari-tunneling
+EOF
+}
+
+load_r2() {
+  ensure_r2_file
+  # shellcheck disable=SC1090
+  . "$R2_FILE"
+  [ -n "$R2_PATH" ] && REMOTE_PATH="$R2_PATH"
+}
+
+save_r2() {
+  cat >"$R2_FILE" <<EOF
+R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
+R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
+R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
+R2_BUCKET=${R2_BUCKET}
+R2_ENDPOINT=${R2_ENDPOINT}
+R2_PATH=${R2_PATH}
+EOF
+}
+
+ensure_rclone() {
+  if ! command -v rclone >/dev/null 2>&1; then
+    echo -e "${RED}rclone belum terpasang. Install dulu: apt install -y rclone${NC}"
+    return 1
+  fi
+  return 0
+}
+
+write_rclone_config() {
+  load_r2
+  if [ -z "$R2_BUCKET" ] || [ -z "$R2_ACCESS_KEY_ID" ] || [ -z "$R2_SECRET_ACCESS_KEY" ]; then
+    echo -e "${RED}Konfigurasi R2 belum lengkap.${NC}"
+    return 1
+  fi
+  cfg_dir="/root/.config/rclone"
+  cfg_file="${cfg_dir}/rclone.conf"
+  mkdir -p "$cfg_dir"
+  endpoint="$R2_ENDPOINT"
+  if [ -z "$endpoint" ] && [ -n "$R2_ACCOUNT_ID" ]; then
+    endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+  fi
+  if [ -z "$endpoint" ]; then
+    echo -e "${RED}R2 endpoint belum ada. Isi R2_ACCOUNT_ID atau R2_ENDPOINT.${NC}"
+    return 1
+  fi
+  cat >"$cfg_file" <<EOF
+[${RCLONE_REMOTE}]
+type = s3
+provider = Cloudflare
+access_key_id = ${R2_ACCESS_KEY_ID}
+secret_access_key = ${R2_SECRET_ACCESS_KEY}
+endpoint = ${endpoint}
+acl = private
+no_check_bucket = true
+EOF
+  chmod 600 "$cfg_file"
+  return 0
+}
+
+setup_creds() {
+  load_r2
+  echo
+  read -rp "R2_ACCOUNT_ID [${R2_ACCOUNT_ID}]: " v; [ -n "$v" ] && R2_ACCOUNT_ID="$v"
+  read -rp "R2_ACCESS_KEY_ID [${R2_ACCESS_KEY_ID}]: " v; [ -n "$v" ] && R2_ACCESS_KEY_ID="$v"
+  read -rsp "R2_SECRET_ACCESS_KEY [hidden]: " v; echo; [ -n "$v" ] && R2_SECRET_ACCESS_KEY="$v"
+  read -rp "R2_BUCKET [${R2_BUCKET}]: " v; [ -n "$v" ] && R2_BUCKET="$v"
+  read -rp "R2_ENDPOINT [${R2_ENDPOINT}] (optional): " v; [ -n "$v" ] && R2_ENDPOINT="$v"
+  read -rp "R2_PATH [${R2_PATH:-ari-tunneling}]: " v; [ -n "$v" ] && R2_PATH="$v"
+  save_r2
+  write_rclone_config && echo -e "${GREEN}Konfigurasi R2 tersimpan.${NC}"
+}
+
+test_upload() {
+  ensure_rclone || return 1
+  write_rclone_config || return 1
+  load_r2
+  tmp="/tmp/ari-r2-test-$(date +%s).txt"
+  echo "ari-r2-test $(date '+%F %T')" > "$tmp"
+  rclone copyto "$tmp" "${RCLONE_REMOTE}:${R2_BUCKET}/${REMOTE_PATH}/_test.txt" >/dev/null 2>&1 \
+    && echo -e "${GREEN}Test upload sukses.${NC}" \
+    || echo -e "${RED}Test upload gagal.${NC}"
+  rm -f "$tmp"
+}
+
+list_remote() {
+  ensure_rclone || return 1
+  write_rclone_config || return 1
+  load_r2
+  out="$(rclone lsl "${RCLONE_REMOTE}:${R2_BUCKET}/${REMOTE_PATH}" 2>/dev/null)"
+  if [ -z "$out" ]; then
+    echo -e "${YELLOW}Belum ada backup remote atau akses gagal.${NC}"
+    return 0
+  fi
+  echo "$out" | nl -w2 -s'. '
+}
+
+upload_latest() {
+  ensure_rclone || return 1
+  write_rclone_config || return 1
+  load_r2
+  latest="$(ls -1t "$BACKUP_DIR"/ari-backup-*.tar.gz 2>/dev/null | head -n 1)"
+  if [ -z "$latest" ]; then
+    echo -e "${RED}Tidak ada file backup lokal di ${BACKUP_DIR}.${NC}"
+    return 1
+  fi
+  rclone copyto "$latest" "${RCLONE_REMOTE}:${R2_BUCKET}/${REMOTE_PATH}/$(basename "$latest")" \
+    && echo -e "${GREEN}Upload sukses: $(basename "$latest")${NC}" \
+    || echo -e "${RED}Upload gagal.${NC}"
+}
+
+pull_latest() {
+  ensure_rclone || return 1
+  write_rclone_config || return 1
+  load_r2
+  mkdir -p "$BACKUP_DIR"
+  latest_remote="$(rclone lsf "${RCLONE_REMOTE}:${R2_BUCKET}/${REMOTE_PATH}" --files-only 2>/dev/null | grep '^ari-backup-.*\.tar\.gz$' | sort | tail -n 1)"
+  if [ -z "$latest_remote" ]; then
+    echo -e "${RED}Tidak ada backup remote.${NC}"
+    return 1
+  fi
+  rclone copyto "${RCLONE_REMOTE}:${R2_BUCKET}/${REMOTE_PATH}/${latest_remote}" "${BACKUP_DIR}/${latest_remote}" \
+    && echo -e "${GREEN}Restore latest sukses: ${latest_remote}${NC}" \
+    || echo -e "${RED}Restore latest gagal.${NC}"
+}
+
+delete_by_index() {
+  ensure_rclone || return 1
+  write_rclone_config || return 1
+  load_r2
+  mapfile -t files < <(rclone lsf "${RCLONE_REMOTE}:${R2_BUCKET}/${REMOTE_PATH}" --files-only 2>/dev/null | grep '^ari-backup-.*\.tar\.gz$' | sort)
+  if [ "${#files[@]}" -eq 0 ]; then
+    echo -e "${RED}Tidak ada backup remote untuk dihapus.${NC}"
+    return 1
+  fi
+  echo "Daftar backup remote:"
+  i=1
+  for f in "${files[@]}"; do
+    echo "  [$i] $f"
+    i=$((i+1))
+  done
+  read -rp "Pilih index yang dihapus: " idx
+  if ! [[ "$idx" =~ ^[0-9]+$ ]] || [ "$idx" -lt 1 ] || [ "$idx" -gt "${#files[@]}" ]; then
+    echo -e "${RED}Index tidak valid.${NC}"
+    return 1
+  fi
+  target="${files[$((idx-1))]}"
+  rclone deletefile "${RCLONE_REMOTE}:${R2_BUCKET}/${REMOTE_PATH}/${target}" \
+    && echo -e "${GREEN}Deleted: ${target}${NC}" \
+    || echo -e "${RED}Gagal hapus file remote.${NC}"
+}
+
+while true; do
+  load_r2
+  clear
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m           CLOUD BACKUP CONNECTOR           \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}REMOTE${NC} : ${RCLONE_REMOTE}:${R2_BUCKET:-<bucket>}/${R2_PATH:-ari-tunneling}"
+  if command -v rclone >/dev/null 2>&1; then
+    echo -e "\033[0;34m│  ${GREEN}RCLONE${NC} : READY"
+  else
+    echo -e "\033[0;34m│  ${RED}RCLONE${NC} : NOT INSTALLED"
+  fi
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Setup R2 Credentials                    \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Test Upload                             \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}3.)${NC} List Remote Backup                      \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}4.)${NC} Upload Latest Local Backup              \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}5.)${NC} Pull Latest Remote Backup               \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}6.)${NC} Delete Remote Backup by Index           \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-6,x] : " opt
+  case "$opt" in
+    1) setup_creds; read -n 1 -s -r -p " Press any key..." ;;
+    2) test_upload; read -n 1 -s -r -p " Press any key..." ;;
+    3) list_remote; read -n 1 -s -r -p " Press any key..." ;;
+    4) upload_latest; read -n 1 -s -r -p " Press any key..." ;;
+    5) pull_latest; read -n 1 -s -r -p " Press any key..." ;;
+    6) delete_by_index; read -n 1 -s -r -p " Press any key..." ;;
+    x|X) exit 0 ;;
+  esac
+done

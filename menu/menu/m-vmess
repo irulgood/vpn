@@ -1,0 +1,270 @@
+#!/bin/bash
+Green="\e[92;1m"
+RED="\033[31m"
+YELLOW="\033[33m"
+BLUE="\033[36m"
+FONT="\033[0m"
+GREENBG="\033[42;37m"
+REDBG="\033[41;37m"
+OK="${Green}--->${FONT}"
+ERROR="${RED}[ERROR]${FONT}"
+GRAY="\e[1;30m"
+NC='\e[0m'
+red='\e[1;31m'
+green='\e[0;36m'
+DF='\e[39m'
+Bold='\e[1m'
+Blink='\e[5m'
+yell='\e[33m'
+red='\e[31m'
+green='\e[36m'
+blue='\e[34m'
+PURPLE='\e[35m'
+cyan='\e[36m'
+Lred='\e[91m'
+Lgreen='\e[92m'
+Lyellow='\e[93m'
+NC='\e[0m'
+GREEN='\033[0;36m'
+ORANGE='\033[0;33m'
+LIGHT='\033[0;37m'
+grenbo="\e[92;1m"
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+###lock vmwss
+function lock() {
+    clear
+    echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+    echo -e "$COLOR1│${NC} ${COLBG1}             • LOCK XRAY USER •              ${NC} $COLOR1│$NC"
+    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+    read -rp "   Input Username for lock: " user
+
+    if [ -z $user ]; then
+        m-vmess
+    else
+        uuid=$(cat /etc/vmess/.vmess.db | grep $user | awk '{print $4}')
+        if [ -z "$uuid" ]; then
+            echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+            echo -e "$COLOR1│${NC}   • User not found in database."
+            echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+        else
+        uuid=$(cat /etc/vmess/.vmess.db | grep $user | awk '{print $4}')
+        exp=$(cat /etc/vmess/.vmess.db | grep $user | awk '{print $3}')
+            # Remove user from XRay configuration and database
+            sed -i "/^### $user $exp/,/^},{/d" /etc/xray/config.json
+                  systemctl restart xray >> /dev/null 2>&1
+
+            clear
+            echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+            echo -e "$COLOR1│${NC} ${COLBG1}             • LOCKED XRAY USER •            ${NC} $COLOR1│$NC"
+            echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+            echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+            echo -e "$COLOR1│${NC}   • Account locked successfully."
+            echo -e "$COLOR1│${NC}   • Client Name : $user"
+            echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+        fi
+        echo -e ""
+        read -n 1 -s -r -p "   Press any key to back on menu"
+        m-vmess
+    fi
+}
+
+###unlok vmess
+function unlock(){
+sed -i 's/ UNLOCKED//g' /etc/vmess/.vmess.db
+clear
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC} ${COLBG1}             • UNLOCK XRAY USER •              ${NC} $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+read -rp "   Input Username for unlock: " user
+if [ -z $user ]; then
+m-vmess
+else
+uuid=$(cat /etc/vmess/.vmess.db | grep $user | awk '{print $4}')
+exp=$(cat /etc/vmess/.vmess.db | grep $user | awk '{print $3}')
+if [ -z "$uuid" ]; then
+echo "Oh tidak, UUID-mu terhapus."
+echo "Membuat UUID baru..."
+uuid=$(cat /proc/sys/kernel/random/uuid)
+else
+echo "UUID tersedia: $uuid"
+fi
+sed -i '/#vmess$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
+sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
+systemctl restart xray > /dev/null 2>&1
+clear
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC} ${COLBG1}             • UNLOCKED XRAY USER •          ${NC} $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC}   • Accound unlocked Successfully"
+echo -e "$COLOR1\033[0;34m│${NC}"
+echo -e "$COLOR1│${NC}   • Client Name : $user"
+echo -e "$COLOR1│${NC}   • Expired On  : $exp"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+echo -e "$COLOR1│${NC}                 • ARI VPN PREMIUM •                 $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo ""
+read -n 1 -s -r -p "   Press any key to back on menu"
+m-vmess
+fi
+}
+### change uuid
+function change(){
+clear
+NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/config.json")
+if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
+echo ""
+echo ""
+echo "You have no existing clients!" 
+echo "" 
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu
+fi
+
+clear
+echo -e "\033[0;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "           Change uuid Vmess          \E[0m"
+echo -e "\033[0;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo ""
+grep -E "^### " "/etc/xray/config.json" | cut -d ' ' -f 2 | column -t | sort | uniq
+echo ""
+red "tap enter to go back"
+echo -e "\033[0;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+read -rp "Input Username : " user
+if [ -z $user ]; then
+menu
+else
+read -p "Input uuid baru / input new uuid : " uuid
+exp=$(grep -E "^### $user" "/etc/xray/config.json" | cut -d ' ' -f 3 | column -t | sort | uniq)
+
+sed -i "/^### $user $exp/,/^},{/d" /etc/xray/config.json
+
+sed -i '/#vmess$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
+exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
+
+systemctl restart xray
+
+clear
+echo -e "\033[0;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo " VMESS Account Was Successfully Edited"
+echo -e "\033[0;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo ""
+echo " Client Name  : $user"
+echo " Uuid baru  : $uuid"
+echo ""
+echo -e "\033[0;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo ""
+fi
+}
+red() { echo -e "\\033[32;1m${*}\\033[0m"; }
+create_custom_uuid_vmess() {
+    read -rp "Input custom UUID : " custom_uuid
+    if [ -z "$custom_uuid" ]; then
+        echo -e "${RED}UUID tidak boleh kosong.${NC}"
+        sleep 1
+        m-vmess
+        return
+    fi
+    CUSTOM_UUID="$custom_uuid" addws
+}
+# Getting
+ipsaya=$(wget -qO- ipinfo.io/ip)
+data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep Date | sed -e 's/< Date: //')
+date_list=$(date +"%Y-%m-%d" -d "$data_server")
+clear
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│ \033[41;97m                  VMESS MENU                \033[0;34m \033[0;34m│${NC}"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│  ${GREEN}1.)${NC} Create                                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}2.)${NC} Create [Custom UUID]                    \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}3.)${NC} Trial                                   \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}4.)${NC} Delete                                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}5.)${NC} Renew/Extend                            \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}6.)${NC} Modify UUID                             \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}7.)${NC} Check Users Login                       \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}8.)${NC} List Users                              \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ──────────────────────────────────────────  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}9.)${NC} Lock                                    \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}10.)${NC} Unlock                                 \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ──────────────────────────────────────────  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}11.)${NC} Check Config                           \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}12.)${NC} Recovery                               \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}13.)${NC} Edit Limit IP                          \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}14.)${NC} Edit Limit IP All                      \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}15.)${NC} Edit Limit Bandwidth                   \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}16.)${NC} Edit Limit All Bandwidth               \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}17.)${NC} Back to Menu                           \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}x.)${NC} Exit                                    \033[0;34m│${NC}"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+#echo -e "Press [x] Back | UI: ${ORANGE}${UI_MODE}${NC} | Last update: $(date +%F)"
+read -p " Select From Options [1-17,x] : " menu
+case $menu in
+1)   clear ;
+    addws
+    ;;
+2) clear ;
+    create_custom_uuid_vmess
+    ;;
+3) clear ;
+    trialws
+    ;;
+4) clear ;
+    delws
+    ;;
+5) clear ;
+    renewws
+    ;;
+6) clear ;
+    change
+    ;;
+7) clear ;
+    cekws
+    ;;
+8) clear ;
+    user-ws
+    ;;
+9) clear ;
+    lock
+    ;;
+10) clear ;
+    unlock
+    ;;
+11) clear ;
+    user-ws
+    ;;
+12) clear ;
+    recovery
+    ;;
+13) clear ;
+    edit-limip vmess single
+    m-vmess
+    ;;
+14) clear ;
+    edit-limip vmess all
+    m-vmess
+    ;;
+15) clear ;
+    limitspeed
+    ;;
+16) clear ;
+    wondershaper
+    ;;
+17|0|00) clear ;
+    menu
+    ;;
+x|X) clear ;
+    exit 0
+    ;;
+*) clear ;
+    menu
+    ;;
+esac

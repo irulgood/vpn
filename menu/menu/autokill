@@ -1,0 +1,115 @@
+#!/bin/bash
+# My Telegram : https://t.me/ARI_VPN_STORE
+# ==========================================
+# Color
+GREEN='\e[36m'
+RED='\033[0;31m'
+BGBLUE='\e[1;44m'
+ORANGE='\033[0;33m'
+BLUE='\033[1;36m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+BG='\E[44;1;39m'
+NC='\033[0;37m'
+WHITE='\033[0;37m'
+r="\033[1;31m"  #REDTERANG
+# ==========================================
+rm -rf /root/log-limit.txt
+touch /root/log-limit.txt
+clear
+Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="$NC"
+Info="${Green_font_prefix}[ON]${Font_color_suffix}"
+Error="${Red_font_prefix}[OFF]${Font_color_suffix}"
+cek=$(grep -c -E "^# Autokill" /etc/cron.d/tendang)
+if [[ "$cek" = "1" ]]; then
+sts="${Info}"
+else
+sts="${Error}"
+fi
+clear
+echo -e ""
+echo -e "$BLUE┌──────────────────────────────────────────┐$NC"
+echo -e "            Status Autokill $sts           "
+echo -e "$BLUE└──────────────────────────────────────────┘$NC"
+echo -e "$BLUE┌──────────────────────────────────────────┐$NC"
+echo -e "       1. AutoKill After 1 Minutes"
+echo -e "       2. AutoKill After 2 Minutes"
+echo -e "       3. AutoKill After 3 Minutes"
+echo -e "       4. Turn Off AutoKill/MultiLogin"
+echo -e "       0. Exit"
+echo -e "$BLUE└──────────────────────────────────────────┘$NC"                                                                                               
+echo -e ""
+read -p "Select From Options [1-4 or 0] :  " AutoKill
+echo -e ""
+case $AutoKill in
+                1)
+                echo -e ""
+                read -p "Multilogin Maximum Number Of Allowed: " max
+                sleep 1
+                clear
+                echo > /etc/cron.d/tendang
+                echo "# Autokill" >>/etc/cron.d/tendang
+                echo "*/1 * * * *  root /usr/sbin/tendang $max" >>/etc/cron.d/tendang
+                echo -e ""
+                echo -e "$BLUE┌──────────────────────────────────────────┐$NC"
+                echo -e ""
+                echo -e "        Allowed MultiLogin : $max"
+                echo -e "        AutoKill Every     : 1 Minutes"      
+                echo -e ""
+                echo -e "$BLUE└──────────────────────────────────────────┘$NC"                         read -n 1 -s -r -p "Press [ Enter ] to back on menu"
+                menu                                
+                ;;
+                2)
+                echo -e ""
+                read -p "Multilogin Maximum Number Of Allowed: " max
+                sleep 1
+                clear
+                echo > /etc/cron.d/tendang
+                echo "# Autokill" >>/etc/cron.d/tendang
+                echo "*/2 * * * *  root /usr/sbin/tendang $max" >>/etc/cron.d/tendang
+                echo -e ""
+                echo -e "$BLUE┌──────────────────────────────────────────┐$NC"
+                echo -e ""
+                echo -e "        Allowed MultiLogin : $max"
+                echo -e "        AutoKill Every     : 2 Minutes"
+                echo -e ""
+                echo -e "$BLUE└──────────────────────────────────────────┘$NC"
+                read -n 1 -s -r -p "Press [ Enter ] to back on menu"
+                menu
+                ;;
+                3)
+                echo -e ""
+                read -p "Multilogin Maximum Number Of Allowed: " max
+                sleep 1
+                clear
+                echo > /etc/cron.d/tendang
+                echo "# Autokill" >>/etc/cron.d/tendang
+                echo "*/3 * * * *  root /usr/sbin/tendang $max" >>/etc/cron.d/tendang
+                echo -e ""
+                echo -e "$BLUE┌──────────────────────────────────────────┐$NC"
+                echo -e ""
+                echo -e "        Allowed MultiLogin : $max"
+                echo -e "        AutoKill Every     : 3 Minutes"
+                echo -e ""
+                echo -e "$BLUE└──────────────────────────────────────────┘$NC"
+                read -n 1 -s -r -p "Press [ Enter ] to back on menu"menu
+                menu
+                ;;
+                4)
+                clear
+                echo > /etc/cron.d/tendang
+                echo -e ""
+                echo -e "$BLUE┌──────────────────────────────────────────┐$NC"
+                echo -e ""
+                echo -e "        AutoKill MultiLogin Turned Off  "
+                echo -e ""
+                echo -e "$BLUE└──────────────────────────────────────────┘$NC"
+                read -n 1 -s -r -p "Press [ Enter ] to back on menu"
+                m-sshws
+                ;;
+                0 | 00)
+                clear
+                m-sshws
+                ;;
+        esac
+        

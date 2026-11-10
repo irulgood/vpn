@@ -1,0 +1,161 @@
+#!/bin/bash
+# My Telegram : https://t.me/MRZST0RE
+# ==========================================
+# Color
+GREEN='\e[36m'
+RED='\033[0;31m'
+BGBLUE='\e[1;44m'
+ORANGE='\033[0;33m'
+BLUE='\033[1;36m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+BG='\E[44;1;39m'
+NC='\033[0;37m'
+WHITE='\033[0;37m'
+r="\033[1;31m"  #REDTERANG
+# ==========================================
+# Getting
+clear
+IP=$(wget -qO- ipinfo.io/ip);
+date=$(date +"%Y-%m-%d");
+Info="${GREEN}[ON]${NC}"
+Error="${RED}[OFF]${NC}"
+cek=$(grep -c -E "^# BEGIN_Backup" /etc/crontab)
+if [[ "$cek" = "1" ]]; then
+sts="${Info}"
+else
+sts="${Error}"
+fi
+function start() {
+email=$(cat /home/email)
+if [[ "$email" = "" ]]; then
+echo "Please enter your email"
+read -rp "Email : " -e email
+cat <<EOF>>/home/email
+$email
+EOF
+fi
+cat << EOF >> /etc/crontab
+# BEGIN_Backup
+0 0 * * * root backup
+# END_Backup
+EOF
+service cron restart
+sleep 1
+echo " Please Wait"
+clear
+echo " Autobackup Has Been Started"
+echo " Data Will Be Backed Up Automatically at 00:00 GMT +7"
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu-backup
+}
+function stop() {
+email=$(cat /home/email)
+sed -i "/^$email/d" /home/email
+sed -i "/^# BEGIN_Backup/,/^# END_Backup/d" /etc/crontab
+service cron restart
+sleep 1
+echo " Please Wait"
+clear
+echo " Autobackup Has Been Stopped"
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu-backup
+}
+
+function gantipenerima() {
+rm -rf /home/email
+echo "Please enter your email"
+read -rp "Email : " -e email
+cat <<EOF>>/home/email
+$email
+EOF
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu-backup
+}
+function gantipengirim() {
+echo "Please enter your email"
+read -rp "Email : " -e email
+echo "Please enter your Password email"
+read -rp "Password : " -e pwdd
+rm -rf /etc/msmtprc
+cat<<EOF>>/etc/msmtprc
+defaults
+tls on
+tls_starttls on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+account default
+host smtp.gmail.com
+port 587
+auth on
+user $email
+from $email
+password $pwdd
+logfile ~/.msmtp.log
+EOF
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu-backup
+}
+function testemail() {
+email=$(cat /home/email)
+if [[ "$email" = "" ]]; then
+start
+fi
+email=$(cat /home/email)
+echo -e "
+This is the contents of the email trying to send an email from the vps
+IP VPS : $IP
+Date : $date
+" | mail -s "Email Delivery Test" $email
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu-backup
+}
+clear
+echo -e "$GREEN╭────────────────────────────────╮$NC"
+echo -e "$GREEN│$NC $BG     • AUTO BACKUP DATA •     $NC $GREEN│$NC"
+echo -e "$GREEN╰────────────────────────────────╯$NC"
+echo -e "$GREEN╭────────────────────────────────╮$NC"
+echo -e "$GREEN│$NC    STATUS AUTOBACKUP : $sts"
+echo -e "$GREEN╰────────────────────────────────╯$NC"
+echo -e "$GREEN╭────────────────────────────────•$NC"
+echo -e "$GREEN│$NC ${GREEN}[01]${NC} ${ORANGE}•${NC} ${WHITE}BACKUP DATA (Google Drive)${NC}"
+echo -e "$GREEN│$NC ${GREEN}[02]${NC} ${ORANGE}•${NC} ${WHITE}START AUTOBACKUP${NC}"
+echo -e "$GREEN│$NC ${GREEN}[03]${NC} ${ORANGE}•${NC} ${WHITE}STOP AUTOBACKUP${NC}"
+echo -e "$GREEN│$NC ${GREEN}[04]${NC} ${ORANGE}•${NC} ${WHITE}CHANGE RECIPIENT${NC}"
+echo -e "$GREEN│$NC ${GREEN}[05]${NC} ${ORANGE}•${NC} ${WHITE}CHANGE SENDER${NC}"
+echo -e "$GREEN│$NC ${GREEN}[06]${NC} ${ORANGE}•${NC} ${WHITE}TEST SENDING EMAIL${NC}"
+echo -e "$GREEN│$NC ${GREEN}[07]${NC} ${ORANGE}•${NC} ${WHITE}BACKUP DATA & RESTORE (Bot Telegram)${NC}"
+echo -e "$GREEN│$NC"
+echo -e "$GREEN│$NC ${GREEN}[00]${NC} ${ORANGE}•${NC} ${WHITE}BACK TO MENU${NC}"
+echo -e "$GREEN╰────────────────────────────────•$NC"
+echo -e ""
+read -p " Select menu :  "  opt
+case $opt in
+1 | 01)
+backup
+;;
+2 | 02)
+start
+;;
+3 | 03)
+stop
+;;
+4 | 04)
+gantipenerima
+;;
+5 | 05)
+gantipengirim
+;;
+6 | 06)
+testemail
+;;
+7 | 07)
+backup-bot
+;;
+00 | 0) clear ; menu ;;
+*) clear ; menu-backup ;;
+esac

@@ -1,0 +1,40 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+domain="$(cat /etc/xray/domain 2>/dev/null)"
+[ -z "$domain" ] && domain="N/A"
+
+resolve_status="FAIL"
+port80="CLOSED"
+port443="CLOSED"
+cert_stat="N/A"
+resolved_ip="$(getent ahosts "$domain" 2>/dev/null | awk 'NR==1{print $1}')"
+if [ -n "$resolved_ip" ]; then
+  resolve_status="OK (${resolved_ip})"
+fi
+timeout 2 bash -c "echo >/dev/tcp/${domain}/80" 2>/dev/null && port80="OPEN"
+timeout 2 bash -c "echo >/dev/tcp/${domain}/443" 2>/dev/null && port443="OPEN"
+if command -v openssl >/dev/null 2>&1 && [ "$domain" != "N/A" ]; then
+  cert_stat="$(echo | openssl s_client -servername "$domain" -connect "${domain}:443" 2>/dev/null | openssl x509 -noout -dates 2>/dev/null | tr '\n' ' ' | sed 's/notBefore=/start: /; s/notAfter=/ end: /')"
+  [ -z "$cert_stat" ] && cert_stat="CHECK"
+fi
+
+clear
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│ \033[41;97m          DNS / DOMAIN FAILOVER CHECK       \033[0;34m \033[0;34m│${NC}" 
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│  ${GREEN}DOMAIN${NC} : $domain"
+echo -e "\033[0;34m│  ${GREEN}DNS${NC}    : $resolve_status"
+echo -e "\033[0;34m│  ${GREEN}PORT80${NC} : $port80"
+echo -e "\033[0;34m│  ${GREEN}PORT443${NC}: $port443"
+echo -e "\033[0;34m│  ${GREEN}CERT${NC}   : $cert_stat"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+#echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+read -rp " Select [x] Back : " opt
+exit 0
+

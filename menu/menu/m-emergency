@@ -1,0 +1,70 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+FLAG="/etc/ari-emergency-mode"
+
+disable_create_scripts() {
+  for cmd in addssh addws addvless addtr addss trial trialws trialvless trialtr trialss; do
+    p="$(command -v "$cmd" 2>/dev/null)"
+    [ -n "$p" ] && chmod 000 "$p" 2>/dev/null || true
+  done
+}
+
+enable_create_scripts() {
+  for cmd in addssh addws addvless addtr addss trial trialws trialvless trialtr trialss; do
+    p="$(command -v "$cmd" 2>/dev/null)"
+    [ -n "$p" ] && chmod 755 "$p" 2>/dev/null || true
+  done
+}
+
+apply_strict_limit() {
+  iptables -C INPUT -p tcp --syn -m limit --limit 10/second --limit-burst 20 -j ACCEPT 2>/dev/null \
+    || iptables -A INPUT -p tcp --syn -m limit --limit 10/second --limit-burst 20 -j ACCEPT
+  iptables -C INPUT -p tcp --syn -j DROP 2>/dev/null || iptables -A INPUT -p tcp --syn -j DROP
+}
+
+remove_strict_limit() {
+  iptables -D INPUT -p tcp --syn -j DROP 2>/dev/null || true
+  iptables -D INPUT -p tcp --syn -m limit --limit 10/second --limit-burst 20 -j ACCEPT 2>/dev/null || true
+}
+
+status="OFF"
+[ -f "$FLAG" ] && status="ON"
+
+while true; do
+  clear
+  [ -f "$FLAG" ] && status="${RED}ON${NC}" || status="${GREEN}OFF${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│ \033[41;97m              EMERGENCY MODE                \033[0;34m \033[0;34m│${NC}" 
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+  echo -e "\033[0;34m│  ${GREEN}STATUS${NC} : $status"
+  echo -e "\033[0;34m│  ${GREEN}1.)${NC} Enable Emergency Mode                   \033[0;34m│${NC}"
+  echo -e "\033[0;34m│  ${GREEN}2.)${NC} Disable Emergency Mode                  ${NC}"
+  echo -e "\033[0;34m│  ${GREEN}x.)${NC} Kembali                                 \033[0;34m│${NC}"
+  echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+  #echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+  read -rp " Select From Options [1-2,x] : " opt
+  case "$opt" in
+    1)
+      touch "$FLAG"
+      disable_create_scripts
+      apply_strict_limit
+      echo -e "${RED}Emergency mode AKTIF: create account diblok + strict rate limit.${NC}"
+      read -n 1 -s -r -p " Press any key..."
+      ;;
+    2)
+      rm -f "$FLAG"
+      enable_create_scripts
+      remove_strict_limit
+      echo -e "${GREEN}Emergency mode NONAKTIF.${NC}"
+      read -n 1 -s -r -p " Press any key..."
+      ;;
+    x|X) exit 0 ;;
+  esac
+done
+

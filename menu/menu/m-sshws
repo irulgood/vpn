@@ -1,0 +1,166 @@
+#!/bin/bash
+# My Telegram : https://t.me/MRST0RE
+# ==========================================
+# Color
+GREEN='\e[36m'
+RED='\033[0;31m'
+BGBLUE='\e[1;44m'
+ORANGE='\033[0;33m'
+BLUE='\033[1;36m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+BG='\E[44;1;39m'
+NC='\033[0;37m'
+WHITE='\033[0;37m'
+r="\033[1;31m"  #REDTERANG
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+# ==========================================
+# Getting
+#IZIN SCRIPT
+#MYIP=$(curl -sS ipv4.icanhazip.com)
+
+clear
+# Valid Script
+#ipsaya=$(wget -qO- ipinfo.io/ip)
+#data_server=$(curl -v --insecure --silent https://google.com/ 2>&1 | grep #Date | sed -e 's/< Date: //')
+#date_list=$(date +"%Y-%m-%d" -d "$data_server")
+clear
+#Domain
+#domain=$(cat /etc/xray/domain)
+
+modify_password_ssh() {
+  read -rp "Input Username : " usr
+  if ! id "$usr" >/dev/null 2>&1; then
+    echo -e "${RED}User tidak ditemukan.${NC}"
+    sleep 1
+    m-sshws
+    return
+  fi
+  read -rsp "Input New Password : " newpass
+  echo
+  if [ -z "$newpass" ]; then
+    echo -e "${RED}Password tidak boleh kosong.${NC}"
+    sleep 1
+    m-sshws
+    return
+  fi
+  echo -e "$newpass\n$newpass" | passwd "$usr" >/dev/null 2>&1
+  echo -e "${GREEN}Password user ${usr} berhasil diubah.${NC}"
+  sleep 1
+  m-sshws
+}
+
+lock_ssh_user() {
+  read -rp "Input Username : " usr
+  if ! id "$usr" >/dev/null 2>&1; then
+    echo -e "${RED}User tidak ditemukan.${NC}"
+    sleep 1
+    m-sshws
+    return
+  fi
+  passwd -l "$usr" >/dev/null 2>&1
+  echo -e "${GREEN}User ${usr} berhasil di-lock.${NC}"
+  sleep 1
+  m-sshws
+}
+
+unlock_ssh_user() {
+  read -rp "Input Username : " usr
+  if ! id "$usr" >/dev/null 2>&1; then
+    echo -e "${RED}User tidak ditemukan.${NC}"
+    sleep 1
+    m-sshws
+    return
+  fi
+  passwd -u "$usr" >/dev/null 2>&1
+  echo -e "${GREEN}User ${usr} berhasil di-unlock.${NC}"
+  sleep 1
+  m-sshws
+}
+
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│ \033[41;97m           SSH / DROPBEAR / OPENVPN         \033[0;34m \033[0;34m│${NC}"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│  ${GREEN}1.)${NC} Create                                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}2.)${NC} Trial                                   \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}3.)${NC} Delete                                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}4.)${NC} Renew/Extend                            \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}5.)${NC} Modify Password                         \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}6.)${NC} Check Users Login                       \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}7.)${NC} List Users                              \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ──────────────────────────────────────────  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}8.)${NC} Lock                                    \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}9.)${NC} Unlock                                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ──────────────────────────────────────────  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}10.)${NC} Check Config                           \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}11.)${NC} Recovery                               \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}12.)${NC} Edit Limit IP                          \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}13.)${NC} Edit Limit IP All                      \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}14.)${NC} SlowDNS Manager                        \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}15.)${NC} SSH Port Profile                       \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}16.)${NC} Back to Menu                           \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}x.)${NC} Exit                                    \033[0;34m│${NC}"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+#echo -e "Press [x] Back | UI: ${ORANGE}${UI_MODE}${NC} | Last update: $(date +%F)"
+read -p " Select From Options [1-16,x] : " menu
+echo -e ""
+case $menu in
+1 | 01)
+    addssh
+    ;;
+2 | 02)
+    trial
+    ;;
+3 | 03)
+    delssh
+    ;;
+4 | 04)
+    renewssh
+    ;;
+5 | 05)
+    modify_password_ssh
+    ;;
+6 | 06)
+    cekssh
+    ;;
+7 | 07)
+    member
+    ;;
+8 | 08)
+    lock_ssh_user
+    ;;
+9 | 09)
+    unlock_ssh_user
+    ;;
+10)
+    user-ssh
+    ;;
+11)
+    recovery
+    ;;
+12)
+    edit-limip ssh single
+    m-sshws
+    ;;
+13)
+    edit-limip ssh all
+    m-sshws
+    ;;
+14)
+    m-slowdns
+    ;;
+15)
+    m-ssh-port
+    ;;
+16 | 15 | 0 | 00)
+    menu
+;;
+x | X)
+exit 0
+;;
+*)
+    menu
+    ;;
+esac

@@ -1,0 +1,48 @@
+#!/bin/bash
+# ==========================================
+# Color
+RED='\033[0;31m'
+NC='\033[0m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+LIGHT='\033[0;37m'
+#####BOT
+# ==========================================
+MYIP=$(wget -qO- ipinfo.io/ip);
+CHATID=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 3)
+KEY=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 2)
+export TIME="10"
+export URL="https://api.telegram.org/bot$KEY/sendMessage"
+clear
+function notif_clearcache() {
+    echo  "Notif AddHost Tele"
+    sleep 2
+    CHATID="$CHATID"
+KEY="$KEY"
+TIME="$TIME"
+URL="$URL"
+TEXT="
+<code>=======CLEAR CACHE=======</code>
+<code>Notifikasi clear cache</code>
+<code>Clear cache VPS from server</code>
+<code>==========================</code>
+<code>Clear cache succes</code>
+"
+curl -s --max-time $TIME -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
+}
+echo "Checking VPS"
+clear
+echo ""
+echo ""
+echo -e " \033[32m[Info]\033[0m  Clear RAM Cache"
+echo 1 > /proc/sys/vm/drop_caches
+sleep 3
+echo -e " \033[32m[ok]\033[0m  Cache cleared"
+notif_clearcache
+echo ""
+echo -e " ${GREEN} Back to menu in 2 sec ${NC}"
+sleep 1
+menu

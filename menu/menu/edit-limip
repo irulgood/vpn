@@ -1,0 +1,88 @@
+#!/bin/bash
+# =========================================================
+# EDIT LIMIT IP USER (SSH, VMESS, VLESS, TROJAN)
+# =========================================================
+
+PROTO="${1:-vmess}"
+MODE="${2:-single}"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+NC='\033[0m'
+
+clear
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${WHITE}           EDIT LIMIT IP (${PROTO^^})                ${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+LIMIT_DIR="/etc/kyt/limit/${PROTO}/ip"
+mkdir -p "$LIMIT_DIR"
+
+if [ "$MODE" == "all" ]; then
+    echo -e " ${YELLOW}Mode: Ubah Limit IP untuk SEMUA akun ${PROTO^^}${NC}"
+    echo -e "${CYAN}────────────────────────────────────────────────────${NC}"
+    read -rp " Masukkan Angka Limit IP Baru (misal: 1 atau 2): " new_lim
+    if [[ ! "$new_lim" =~ ^[0-9]+$ ]] || [ "$new_lim" -le 0 ]; then
+        echo -e " ${RED}Angka limit tidak valid!${NC}"
+        sleep 1
+        exit 1
+    fi
+
+    count=0
+    for f in "$LIMIT_DIR"/*; do
+        if [ -f "$f" ]; then
+            u=$(basename "$f")
+            echo "$new_lim" > "$f"
+            count=$((count + 1))
+        fi
+    done
+
+    echo -e " ${GREEN}✅ Berhasil mengubah Limit IP menjadi ${new_lim} IP untuk ${count} user ${PROTO^^}!${NC}"
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+    exit 0
+fi
+
+# Single user mode
+read -rp " Masukkan Username ${PROTO^^}: " user
+if [ -z "$user" ]; then
+    echo -e " ${RED}Username tidak boleh kosong!${NC}"
+    sleep 1
+    exit 1
+fi
+
+curr_lim=$(cat "${LIMIT_DIR}/${user}" 2>/dev/null || echo "2")
+echo -e " Limit IP saat ini : ${WHITE}${curr_lim} IP${NC}"
+read -rp " Masukkan Limit IP Baru (misal: 1 atau 2): " new_lim
+
+if [[ ! "$new_lim" =~ ^[0-9]+$ ]] || [ "$new_lim" -le 0 ]; then
+    echo -e " ${RED}Angka limit tidak valid!${NC}"
+    sleep 1
+    exit 1
+fi
+
+echo "$new_lim" > "${LIMIT_DIR}/${user}"
+
+# Update di file .db
+case "$PROTO" in
+    ssh)
+        [ -f /etc/ssh/.ssh.db ] && sed -i -E "s/^(#ssh# +${user} +[^ ]+ +[^ ]+) +[^ ]+/\1 ${new_lim}/" /etc/ssh/.ssh.db
+        ;;
+    vmess)
+        [ -f /etc/vmess/.vmess.db ] && sed -i -E "s/^(### +${user} +[^ ]+ +[^ ]+ +[^ ]+) +[^ ]+/\1 ${new_lim}/" /etc/vmess/.vmess.db
+        ;;
+    vless)
+        [ -f /etc/vless/.vless.db ] && sed -i -E "s/^(#& +${user} +[^ ]+ +[^ ]+ +[^ ]+) +[^ ]+/\1 ${new_lim}/" /etc/vless/.vmess.db
+        ;;
+    trojan)
+        [ -f /etc/trojan/.trojan.db ] && sed -i -E "s/^(#! +${user} +[^ ]+ +[^ ]+ +[^ ]+) +[^ ]+/\1 ${new_lim}/" /etc/trojan/.trojan.db
+        ;;
+esac
+
+echo ""
+echo -e " ${GREEN}✅ Berhasil! Limit IP untuk user '${user}' diubah menjadi: ${WHITE}${new_lim} IP${NC}"
+echo ""
+read -n 1 -s -r -p "Tekan ENTER untuk kembali..."

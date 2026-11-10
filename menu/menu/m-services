@@ -1,0 +1,135 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE=$(cat "$MODE_FILE") || UI_MODE="full"
+clear
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│ \033[41;97m                MENU ALL SERVICE            \033[0;34m │${NC}" 
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│  ${GREEN}[01]${NC} RUNNING SYSTEM                         \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[02]${NC} PORT VPS INFO                          \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[03]${NC} LOAD VPS INFO                          \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[04]${NC} AUTOREBOOT SERVER                      \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[05]${NC} RESTART SERVICE                        \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[06]${NC} REBOOT SERVICE                         \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[07]${NC} CLEAR CACHE                            \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[08]${NC} CEK BANDWITH                           \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[09]${NC} AUTOKILL                               \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[10]${NC} AUTO REBOOT                            \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[11]${NC} INSTALL PLUGIN BOT SELLER              \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[12]${NC} GANTI VERSI DROPBEAR                   \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[13]${NC} WARP CLOUDFLARE                        \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[14]${NC} ROUTING MANAGER                        \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[15]${NC} SECURITY SYN ETC                       \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[16]${NC} SET AUTO UPDATE                        \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[17]${NC} UI MODE (FULL/COMPACT)                 \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[18]${NC} HEALTH CHECK PANEL                     \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[19]${NC} CLIENT CONFIG CHECKER                  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[20]${NC} BACKUP SCHEDULE + ROTATION             \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[21]${NC} DNS / DOMAIN FAILOVER CHECK            \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[22]${NC} ABUSE MONITOR                          \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[23]${NC} ONE-CLICK EMERGENCY MODE               \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[24]${NC} CUSTOM DNS MANAGER                     \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[25]${NC} SSH PORT PROFILE                       \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[26]${NC} CLOUD BACKUP CONNECTOR (R2)            \033[0;34m│${NC}"
+echo -e "\033[0;34m│  ${GREEN}[x ]${NC} BACK                                   \033[0;34m│${NC}"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+#echo -e "Press [x] Back | UI Mode: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+read -p "Select From Options [1-26,x] : " menu
+case $menu in
+1 | 01)
+    run
+    ;;
+2 | 02)
+    prot
+echo ""
+read -n 1 -s -r -p "Press any key to back on menu"
+menu
+    ;;
+3 | 03)
+    clear
+gotop
+echo ""
+echo -e " ${GREEN} Back to menu in 1 sec ${NC}"
+sleep 1
+menu
+    ;;
+4 | 04)
+    autoreboot
+    ;;
+5 | 05)
+    restart
+    ;;
+6 | 06)
+    reboot
+    ;;   
+ 7 | 07)
+    clearcache
+    ;;
+8 | 08)
+   bw
+   ;;
+9 | 09)
+  autokill
+  ;;
+10)
+  autoreboot
+  ;;
+11)
+  install-plugin
+  ;;
+12)
+  ganti-versi-db
+  ;;
+13)
+  m-warp
+  ;;
+14)
+  m-routing
+  ;;
+15)
+  m-security
+  ;;
+16)
+  m-autoupdate
+  ;;
+17)
+  m-uimode
+  ;;
+18)
+  m-healthcheck
+  ;;
+19)
+  m-configcheck
+  ;;
+20)
+  m-backup-rotation
+  ;;
+21)
+  m-domain-check
+  ;;
+22)
+  m-abuse
+  ;;
+23)
+  m-emergency
+  ;;
+24)
+  m-customdns
+  ;;
+25)
+  m-ssh-port
+  ;;
+26)
+  m-cloud-backup
+  ;;
+x|X)
+  menu
+  ;;
+*)
+   menu
+  ;;
+esac

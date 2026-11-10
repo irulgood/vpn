@@ -1,0 +1,178 @@
+#!/bin/bash
+
+# Definisi warna untuk tampilan
+BIBlack='\033[1;90m'
+BIRed='\033[1;91m'
+BIGreen='\033[1;92m'
+BIYellow='\033[0;34m'
+BIBlue='\033[1;94m'
+BIPurple='\033[1;95m'
+BICyan='\033[1;96m'
+BIWhite='\033[1;97m'
+UWhite='\033[4;37m'
+On_IPurple='\033[0;105m'
+On_IRed='\033[0;101m'
+ORANGE='\033[0;33m'
+
+# Fungsi untuk menampilkan pilihan versi Dropbear
+function pilih_versi() {
+    echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+    echo -e "${BIYellow}               PILIH VERSI DROPBEAR               ${BIWhite}"
+    echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+    echo -e "${BIBlue}1) 2018${BIWhite}"
+    echo -e "${BIBlue}2) 2019${BIWhite}"
+    echo -e "${BIBlue}3) 2020${BIWhite}"
+    echo -e "${BIBlue}4) 2022${BIWhite}"
+    read -p "Masukkan nomor pilihan (1-4): " pilihan
+
+    case $pilihan in
+        1)
+            DROPBEAR_VERSION="2018.76"
+            ;;
+        2)
+            DROPBEAR_VERSION="2019.78"
+            ;;
+        3)
+            DROPBEAR_VERSION="2020.81"
+            ;;
+        4)
+            DROPBEAR_VERSION="2022.82"
+            ;;
+        *)
+            echo -e "${BIRed}Pilihan tidak valid. Keluar.${BIWhite}"
+            exit 1
+            ;;
+    esac
+}
+
+# Tentukan lokasi file Dropbear dan kunci
+DROPBEAR_BIN="/usr/sbin/dropbear"
+DROPBEAR_LIB="/usr/lib/dropbear"
+DROPBEAR_CONFIG="/etc/dropbear"
+DROPBEAR_MAN="/usr/share/man/man8/dropbear.8.gz"
+
+# Cek apakah script dijalankan sebagai root
+if [[ $EUID -ne 0 ]]; then
+   echo -e "${BIRed}Script ini harus dijalankan sebagai root!${BIWhite}" 
+   exit 1
+fi
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}                DROPBEAR MANAGER                ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+
+# Memanggil fungsi untuk memilih versi
+pilih_versi
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}    MENGHENTIKAN DROPBEAR SERVICE         ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+if systemctl stop dropbear || service dropbear stop; then
+    echo -e "${BIGreen}Dropbear dihentikan.${BIWhite}"
+else
+    echo -e "${BIRed}Gagal menghentikan Dropbear, pastikan service sudah aktif.${BIWhite}"
+fi
+
+clear
+if [ -f "$DROPBEAR_BIN" ]; then
+    echo -e "${BIGreen}Backup versi lama Dropbear...${BIWhite}"
+    cp $DROPBEAR_BIN /usr/sbin/dropbear.bak
+fi
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}     MENGHAPUS VERSI LAMA DROPBEAR            ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+rm -f $DROPBEAR_BIN $DROPBEAR_LIB/* $DROPBEAR_CONFIG/* $DROPBEAR_MAN
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}     MENGINSTAL DEPENDENSI YANG DIBUTUHKAN       ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+apt-get update && apt-get install -y build-essential zlib1g-dev wget || yum groupinstall "Development Tools" -y && yum install zlib-devel wget -y
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}   MENDOWNLOAD DROPBEAR VERSI $DROPBEAR_VERSION   ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+if wget https://raw.githubusercontent.com/arivpnstores/dropbear/main/dropbear-$DROPBEAR_VERSION.tar.bz2; then
+    tar -xjf dropbear-$DROPBEAR_VERSION.tar.bz2
+else
+    echo -e "${BIRed}Download gagal, periksa URL atau koneksi internet.${BIWhite}"
+    exit 1
+fi
+
+cd dropbear-$DROPBEAR_VERSION || exit
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}   MENGKOMPILASI DAN MENGINSTAL DROPBEAR       ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────────┘${BIWhite}"
+if ./configure --prefix=/usr && make && make install; then
+    echo -e "${BIGreen}Kompilasi berhasil.${BIWhite}"
+else
+    echo -e "${BIRed}Kompilasi gagal.${BIWhite}"
+    exit 1
+fi
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}    MEMINDAHKAN FILE DROPBEAR KE LOKASI YANG SESUAI ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+mv /usr/bin/dropbear $DROPBEAR_BIN
+mkdir -p $DROPBEAR_LIB
+mkdir -p $DROPBEAR_CONFIG
+if [ -f "/usr/share/man/man8/dropbear.8.gz" ]; then
+    mv /usr/share/man/man8/dropbear.8.gz $DROPBEAR_MAN
+else
+    echo -e "${BIYellow}File man tidak ditemukan.${BIWhite}"
+fi
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}     MENGHAPUS KUNCI HOST LAMA DAN MEMBUAT BARU    ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+rm -f /etc/dropbear/dropbear_rsa_host_key
+rm -f /etc/dropbear/dropbear_dss_host_key
+rm -f /etc/dropbear/dropbear_ecdsa_host_key
+
+echo -e "${BIYellow}Membuat ulang kunci host baru...${BIWhite}"
+dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key
+dropbearkey -t dss -f /etc/dropbear/dropbear_dss_host_key
+dropbearkey -t ecdsa -f /etc/dropbear/dropbear_ecdsa_host_key
+
+
+chmod 600 /etc/dropbear/dropbear_rsa_host_key
+chmod 600 /etc/dropbear/dropbear_dss_host_key
+chmod 600 /etc/dropbear/dropbear_ecdsa_host_key
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}         MEMULAI ULANG DROPBEAR SERVICE        ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+if systemctl start dropbear || service dropbear start; then
+    echo -e "${BIGreen}Dropbear berhasil dimulai.${BIWhite}"
+else
+    echo -e "${BIRed}Gagal memulai Dropbear.${BIWhite}"
+fi
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}         VERIFIKASI VERSI DROPBEAR TERPASANG      ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+if dropbear -V; then
+    echo -e "${BIGreen}Dropbear versi $DROPBEAR_VERSION telah terinstal.${BIWhite}"
+else
+    echo -e "${BIRed}Verifikasi gagal, Dropbear mungkin tidak terinstal dengan benar.${BIWhite}"
+fi
+
+clear
+echo -e "${BIGreen}┌─────────────────────────────────────────────┐${BIWhite}"
+echo -e "${BIYellow}          MEMBERSIHKAN FILE SEMENTARA       ${BIWhite}"
+echo -e "${BIGreen}└─────────────────────────────────────────────┘${BIWhite}"
+cd ..
+rm -rf dropbear-$DROPBEAR_VERSION.tar.bz2 dropbear-$DROPBEAR_VERSION
+
+echo -e "${BIGreen}Proses selesai! Dropbear versi $DROPBEAR_VERSION telah diinstal.${BIWhite}"

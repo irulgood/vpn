@@ -1,0 +1,55 @@
+#!/bin/bash
+NC='\e[0m'
+GREEN='\033[0;36m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+MODE_FILE="/etc/ari-ui-mode"
+[ -f "$MODE_FILE" ] && UI_MODE="$(cat "$MODE_FILE")" || UI_MODE="full"
+
+svc_status() {
+  local svc="$1"
+  if systemctl is-active --quiet "$svc"; then
+    echo -e "${GREEN}ON${NC}"
+  else
+    echo -e "${RED}OFF${NC}"
+  fi
+}
+
+domain="$(cat /etc/xray/domain 2>/dev/null)"
+[ -z "$domain" ] && domain="N/A"
+loadavg="$(awk '{print $1" "$2" "$3}' /proc/loadavg 2>/dev/null)"
+ram_line="$(free -m | awk 'NR==2{print $3"MB / "$2"MB"}')"
+disk_line="$(df -h / | awk 'NR==2{print $3" / "$2" ("$5")"}')"
+uptime_line="$(uptime -p 2>/dev/null | sed 's/^up //')"
+[ -z "$uptime_line" ] && uptime_line="N/A"
+
+cert_exp="N/A"
+if [ -n "$domain" ] && [ "$domain" != "N/A" ] && command -v openssl >/dev/null 2>&1; then
+  cert_exp="$(echo | openssl s_client -servername "$domain" -connect "${domain}:443" 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | sed 's/notAfter=//')"
+  [ -z "$cert_exp" ] && cert_exp="N/A"
+fi
+
+clear
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│ \033[41;97m              HEALTH CHECK PANEL            \033[0;34m \033[0;34m│${NC}" 
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+echo -e "\033[0;34m┌──────────────────────────────────────────────┐${NC}"
+echo -e "\033[0;34m│  XRAY      : $(svc_status xray)"
+echo -e "\033[0;34m│  NGINX     : $(svc_status nginx)"
+echo -e "\033[0;34m│  HAPROXY   : $(svc_status haproxy)"
+echo -e "\033[0;34m│  SSH-WS    : $(svc_status ws)"
+echo -e "\033[0;34m│  ──────────────────────────────────────────  \033[0;34m│${NC}"
+echo -e "\033[0;34m│  LOAD AVG  : ${loadavg:-N/A}"
+echo -e "\033[0;34m│  RAM       : ${ram_line:-N/A}"
+echo -e "\033[0;34m│  DISK /    : ${disk_line:-N/A}"
+echo -e "\033[0;34m│  UPTIME    : $uptime_line"
+echo -e "\033[0;34m│  DOMAIN    : $domain"
+echo -e "\033[0;34m│  CERT EXP  : $cert_exp"
+echo -e "\033[0;34m└──────────────────────────────────────────────┘${NC}"
+#echo -e "Press [x] Back | UI: ${YELLOW}${UI_MODE}${NC} | Last update: $(date +%F)"
+read -rp " Select [x] Back : " opt
+case "$opt" in
+  x|X) exit 0 ;;
+  *) exit 0 ;;
+esac
+
